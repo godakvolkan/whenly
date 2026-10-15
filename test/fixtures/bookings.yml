@@ -3,10 +3,10 @@ pending_booking:
   event_type: one
   invitee_name: "Ahmet Yılmaz"
   invitee_email: "ahmet@example.com"
-  starts_at: <%= 2.days.from_now.change(hour: 10, min: 0) %>
-  ends_at: <%= 2.days.from_now.change(hour: 10, min: 30) %>
+  starts_at: "2026-11-10 10:00:00"
+  ends_at: "2026-11-10 10:30:00"
   status: "pending"
-  approval_deadline_at: <%= 1.day.from_now %>
+  approval_deadline_at: "2026-11-09 10:00:00"
   token: "fixture_token_pending"
 
 confirmed_booking:
@@ -14,8 +14,8 @@ confirmed_booking:
   event_type: one
   invitee_name: "Mehmet Demir"
   invitee_email: "mehmet@example.com"
-  starts_at: <%= 3.days.from_now.change(hour: 14, min: 0) %>
-  ends_at: <%= 3.days.from_now.change(hour: 14, min: 30) %>
+  starts_at: "2026-11-11 14:00:00"
+  ends_at: "2026-11-11 14:30:00"
   status: "confirmed"
-  approval_deadline_at: <%= 2.days.from_now %>
+  approval_deadline_at: "2026-11-10 14:00:00"
   token: "fixture_token_confirmed"

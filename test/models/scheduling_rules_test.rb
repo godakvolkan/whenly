@@ -181,4 +181,23 @@ class SchedulingRulesTest < ActiveSupport::TestCase
     assert_equal "pending", created_booking.status
     assert_not_nil created_booking.approval_deadline_at
   end
+
+  test "rule 3: repeat no-show detection is case-insensitive" do
+    email = "deneme_vaka@example.com"
+    2.times do |i|
+      Booking.create!(
+        user: @user,
+        event_type: @approval_event,
+        invitee_name: "Büyük Küçük Vaka",
+        invitee_email: email.upcase,
+        starts_at: (5 + i).days.ago,
+        ends_at: (5 + i).days.ago + 30.minutes,
+        status: "no_show"
+      )
+    end
+
+    # Karışık harfle sorgulansa bile tanımalı
+    assert SchedulingRules.repeat_no_show?(@user, "DeNeMe_VaKa@ExAmPlE.cOm")
+    assert SchedulingRules.force_approval?(@user, "DENEME_VAKA@EXAMPLE.COM", @instant_event)
+  end
 end

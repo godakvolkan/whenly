@@ -1,9 +1,7 @@
 # Demo ev sahibi (Host)
-user = User.find_or_create_by!(email_address: "demo@slotwise.dev") do |u|
-  u.name = "Volkan Godak"
-  u.password = "password123"
-  u.slug = "volkan"
-end
+# Kullanıcı slug ile bulunur; böylece eski demo e-postasıyla oluşturulmuş kayıt da güncellenir.
+user = User.find_or_initialize_by(slug: "volkan")
+user.update!(name: "Volkan Godak", email_address: "demo@whenly.dev", password: "password123")
 
 # Randevu Türleri (Event Types)
 user.event_types.find_or_create_by!(slug: "mentorluk") do |et|

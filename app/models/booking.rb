@@ -16,6 +16,7 @@ class Booking < ApplicationRecord
   validates :invitee_name, :invitee_email, :starts_at, :ends_at, presence: true
   validates :token, presence: true, uniqueness: true
 
+  before_validation :normalize_email
   before_validation :set_token, on: :create
 
   class InvalidTransition < StandardError; end
@@ -25,6 +26,16 @@ class Booking < ApplicationRecord
       raise InvalidTransition, "#{status} -> #{rule[:to]} izin verilmiyor" unless status == rule[:from]
       update!(status: rule[:to])
     end
+  end
+
+  # Özel durum: confirm! süresi dolmuş randevularda izin verilmez
+  def confirm!
+    raise InvalidTransition, "#{status} -> confirmed izin verilmiyor" unless status == "pending"
+    if approval_deadline_at.present? && Time.current >= approval_deadline_at
+      expire!
+      raise InvalidTransition, "Randevunun onay süresi dolduğu için onaylanamaz."
+    end
+    update!(status: "confirmed")
   end
 
   # Özel durum: cancel! hem 'pending' hem 'confirmed' durumundan gecilebilir
@@ -48,6 +59,10 @@ class Booking < ApplicationRecord
   }
 
   private
+
+  def normalize_email
+    self.invitee_email = invitee_email.to_s.strip.downcase if invitee_email.present?
+  end
 
   def set_token
     self.token ||= SecureRandom.urlsafe_base64(16)

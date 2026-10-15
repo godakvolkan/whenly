@@ -96,4 +96,77 @@ class Bookings::CreateTest < ActiveSupport::TestCase
       assert_equal "pending", result.booking.status
     end
   end
+
+  test "rejects booking outside working hours" do
+    monday = Date.current.next_occurring(:monday)
+    travel_to (monday - 2.days).beginning_of_day do
+      # 08:00 çalışma saatinden önce (çalışma saati 09:00 - 17:00)
+      early_slot = monday.in_time_zone("Istanbul").change(hour: 8, min: 0)
+      result = Bookings::Create.new(
+        user: @user,
+        event_type: @instant_event,
+        params: { invitee_name: "Erkenci", invitee_email: "erkenci@example.com", starts_at: early_slot.iso8601 }
+      ).call
+
+      assert_not result.success?
+      assert_includes result.error, "çalışma saatleri"
+    end
+  end
+
+  test "rejects booking overlapping with active booking" do
+    monday = Date.current.next_occurring(:monday)
+    travel_to (monday - 2.days).beginning_of_day do
+      slot = monday.in_time_zone("Istanbul").change(hour: 10, min: 0)
+      Booking.create!(
+        user: @user,
+        event_type: @approval_event,
+        invitee_name: "Mevcut",
+        invitee_email: "mevcut@example.com",
+        starts_at: slot,
+        ends_at: slot + 30.minutes,
+        status: "confirmed"
+      )
+
+      result = Bookings::Create.new(
+        user: @user,
+        event_type: @instant_event,
+        params: { invitee_name: "Yeni", invitee_email: "yeni@example.com", starts_at: slot.iso8601 }
+      ).call
+
+      assert_not result.success?
+      assert_includes result.error, "randevu bulunmaktadır"
+    end
+  end
+
+  test "automatically expires overdue pending booking and frees the slot" do
+    monday = Date.current.next_occurring(:monday)
+    base_time = (monday - 2.days).beginning_of_day
+    travel_to base_time do
+      slot = monday.in_time_zone("Istanbul").change(hour: 10, min: 0)
+      old_pending = Booking.create!(
+        user: @user,
+        event_type: @approval_event,
+        invitee_name: "Gecikmiş",
+        invitee_email: "gecikmis@example.com",
+        starts_at: slot,
+        ends_at: slot + 30.minutes,
+        status: "pending",
+        approval_deadline_at: base_time + 4.hours
+      )
+
+      # 5 saat sonrasına gidelim (onay süresi doldu)
+      travel 5.hours
+
+      # Yeni bir davetli aynı saate rezervasyon yapabilmeli ve 500 almamalı
+      result = Bookings::Create.new(
+        user: @user,
+        event_type: @approval_event,
+        params: { invitee_name: "Yeni Davetli", invitee_email: "yeni@example.com", starts_at: slot.iso8601 }
+      ).call
+
+      assert result.success?, "Hata alındı: #{result.error}"
+      assert_equal "expired", old_pending.reload.status
+      assert_equal "pending", result.booking.status
+    end
+  end
 end

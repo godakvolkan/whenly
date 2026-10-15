@@ -21,7 +21,8 @@ class SchedulingRules
   # Kural 3: Gelmeme kontrolu
   def self.repeat_no_show?(user, invitee_email)
     return false if user.nil? || invitee_email.blank?
-    Booking.where(user: user, invitee_email: invitee_email, status: "no_show").count >= NO_SHOW_THRESHOLD
+    email = invitee_email.to_s.strip.downcase
+    Booking.where(user: user, status: "no_show").where("LOWER(invitee_email) = ?", email).count >= NO_SHOW_THRESHOLD
   end
 
   # Kural 3 devami: no_show isaretlenebilir mi?

@@ -122,4 +122,24 @@ class BookingTest < ActiveSupport::TestCase
       duplicate.save(validate: false)
     end
   end
+
+  test "cannot confirm an expired pending booking" do
+    @booking.update!(approval_deadline_at: 1.hour.ago)
+    assert_raises(Booking::InvalidTransition) do
+      @booking.confirm!
+    end
+    assert @booking.reload.expired?
+  end
+
+  test "normalizes invitee email to lowercase" do
+    b = Booking.create!(
+      user: @user,
+      event_type: @event_type,
+      invitee_name: "Büyük Harf",
+      invitee_email: "  BUYUK_HARF@EXAMPLE.COM  ",
+      starts_at: 2.days.from_now.change(hour: 16, min: 0),
+      ends_at: 2.days.from_now.change(hour: 16, min: 30)
+    )
+    assert_equal "buyuk_harf@example.com", b.invitee_email
+  end
 end
