@@ -1,0 +1,81 @@
+<div class="public-booking-layout">
+  <div class="booking-box">
+    <div class="booking-header">
+      <div class="host-name"><%= @user.name %></div>
+      <h1 class="booking-title"><%= @event_type.name %></h1>
+      <div class="booking-meta">
+        <span style="display: inline-flex; align-items: center; gap: 4px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <%= @event_type.duration_minutes %> Dakika
+        </span>
+        <% if @event_type.requires_approval? %>
+          <span class="badge badge-warning" style="font-size: 0.725rem;">Ev Sahibi Onayı Gerekli</span>
+        <% else %>
+          <span class="badge badge-confirmed" style="font-size: 0.725rem;">Anında Onay</span>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="booking-body" data-controller="slot-select">
+      <h3 style="margin-bottom: 12px; font-size: 1.05rem;">Tarih Seçin</h3>
+      
+      <div class="date-selector">
+        <% (0..13).each do |day_offset| %>
+          <% current_date = Date.current + day_offset.days %>
+          <% is_active = (current_date == @date) %>
+          <%= link_to new_public_booking_path(slug: @user.slug, event_type: @event_type.slug, date: current_date), class: "date-chip #{'active' if is_active}" do %>
+            <span class="day-name"><%= l(current_date, format: "%a") rescue current_date.strftime("%a") %></span>
+            <span class="day-num"><%= current_date.day %></span>
+          <% end %>
+        <% end %>
+      </div>
+
+      <h3 style="margin-bottom: 12px; font-size: 1.05rem;">
+        Uygun Saatler (<%= l(@date, format: "%d %B %Y, %A") rescue @date.strftime("%d.%m.%Y") %>)
+      </h3>
+
+      <% if @slots.any? %>
+        <div class="slots-grid">
+          <% @slots.each do |slot| %>
+            <% time_str = slot[:starts_at].in_time_zone("Istanbul").strftime("%H:%M") %>
+            <button type="button"
+                    class="slot-btn"
+                    data-action="click->slot-select#select"
+                    data-starts-at="<%= slot[:starts_at].iso8601 %>"
+                    data-time-formatted="<%= time_str %>">
+              <%= time_str %>
+            </button>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="empty-state card" style="margin-bottom: 24px;">
+          <p>Bu tarihte uygun randevu saati bulunmuyor.</p>
+          <p style="font-size: 0.85rem; margin-top: 4px;">Lütfen yukarıdan başka bir gün seçiniz.</p>
+        </div>
+      <% end %>
+
+      <div class="card hidden" data-slot-select-target="form" style="background: var(--color-bg); border: 2px solid var(--color-primary);">
+        <h3 style="margin-bottom: 16px;">
+          Bilgilerinizi Girin (<span data-slot-select-target="selectedSlotTime" style="color: var(--color-primary);"></span>)
+        </h3>
+
+        <%= form_with scope: :booking, url: public_booking_path(slug: @user.slug, event_type: @event_type.slug), method: :post, local: true do |f| %>
+          <%= f.hidden_field :starts_at, data: { "slot-select-target": "startsAt" } %>
+
+          <div class="form-group">
+            <%= f.label :invitee_name, "Adınız Soyadınız", class: "form-label" %>
+            <%= f.text_field :invitee_name, class: "form-control", placeholder: "Örn: Ahmet Yılmaz", required: true %>
+          </div>
+
+          <div class="form-group">
+            <%= f.label :invitee_email, "E-posta Adresiniz", class: "form-label" %>
+            <%= f.email_field :invitee_email, class: "form-control", placeholder: "Örn: ahmet@example.com", required: true %>
+            <div class="form-help">Rezervasyon onay ve detay linki bu e-postaya gönderilecektir.</div>
+          </div>
+
+          <%= f.submit "Randevuyu Onayla", class: "btn btn-primary", style: "width: 100%; padding: 12px;" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

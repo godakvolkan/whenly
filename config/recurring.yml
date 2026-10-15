@@ -1,0 +1,11 @@
+# Configuration for Solid Queue recurring jobs
+# See: https://github.com/rails/solid_queue#recurring-tasks
+production:
+  expire_pending_bookings:
+    class: ExpirePendingBookingsJob
+    schedule: every minute
+
+development:
+  expire_pending_bookings:
+    class: ExpirePendingBookingsJob
+    schedule: every minute

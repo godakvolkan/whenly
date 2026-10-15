@@ -1,0 +1,203 @@
+<div data-controller="tabs">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 800; color: var(--color-text);">Randevu Yönetim Paneli</h1>
+      <p style="font-size: 14px; color: var(--color-text-secondary); margin-top: 4px;">
+        Rezervasyon taleplerini inceleyin, onaylayın ve geçmiş randevuları takip edin.
+      </p>
+    </div>
+  </div>
+
+  <div class="tabs-nav">
+    <button type="button" class="tab-btn active" data-tabs-target="tab" data-tab-target="pending" data-action="click->tabs#switch">
+      Onay Bekleyen
+      <% if @pending.any? %>
+        <span class="badge badge-pending" style="margin-left: 6px;"><%= @pending.count %></span>
+      <% end %>
+    </button>
+    <button type="button" class="tab-btn" data-tabs-target="tab" data-tab-target="upcoming" data-action="click->tabs#switch">
+      Yaklaşan
+      <% if @upcoming.any? %>
+        <span class="badge badge-confirmed" style="margin-left: 6px;"><%= @upcoming.count %></span>
+      <% end %>
+    </button>
+    <button type="button" class="tab-btn" data-tabs-target="tab" data-tab-target="past" data-action="click->tabs#switch">
+      Geçmiş
+    </button>
+  </div>
+
+  <!-- Sekme 1: Onay Bekleyen -->
+  <div data-tabs-target="panel" data-panel-name="pending">
+    <% if @pending.any? %>
+      <% @pending.each do |booking| %>
+        <div class="booking-card">
+          <div class="booking-card-top">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3 style="font-size: 17px; font-weight: 700;"><%= booking.invitee_name %></h3>
+                <span class="badge badge-pending">Onay Bekliyor</span>
+                <% if SchedulingRules.repeat_no_show?(current_user, booking.invitee_email) %>
+                  <span class="badge badge-warning" title="Bu davetli geçmişte 2 veya daha fazla randevuya katılmamıştır.">
+                    ⚠️ Tekrar eden no-show (Onay Zorunlu)
+                  </span>
+                <% end %>
+              </div>
+              <div style="font-size: 14px; color: var(--color-text-secondary); margin-top: 2px;">
+                <%= booking.invitee_email %>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-weight: 600; color: var(--color-primary);"><%= booking.event_type.name %></span>
+              <span style="font-size: 13px; color: var(--color-text-secondary); display: block;">
+                <%= booking.event_type.duration_minutes %> dk
+              </span>
+            </div>
+          </div>
+
+          <div class="booking-card-body">
+            <div>
+              <span style="color: var(--color-text-muted); font-size: 12px; display: block;">Tarih & Saat</span>
+              <strong>
+                <%= booking.starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y, %H:%M") %> -
+                <%= booking.ends_at.in_time_zone("Istanbul").strftime("%H:%M") %>
+              </strong>
+            </div>
+            <% if booking.approval_deadline_at.present? %>
+              <div>
+                <span style="color: var(--color-text-muted); font-size: 12px; display: block;">Son Onay Zamanı</span>
+                <span class="countdown-box" data-controller="countdown" data-countdown-deadline-value="<%= booking.approval_deadline_at.iso8601 %>">
+                  ⏳ Kalan süre: <span data-target="countdown.display">Hesaplanıyor...</span>
+                </span>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="booking-card-actions">
+            <div style="font-size: 13px; color: var(--color-text-secondary);">
+              Davetli Bağlantısı: <%= link_to "/b/#{booking.token}", booking_status_path(booking.token), target: "_blank", class: "btn-link" %>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <%= button_to "Onayla", confirm_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-success" %>
+              <%= button_to "Reddet", decline_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-danger", data: { turbo_confirm: "Bu randevu talebini reddetmek istediğinize emin misiniz?" } %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="card" style="text-align: center; padding: 48px 24px; color: var(--color-text-secondary);">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 12px; opacity: 0.5;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 6v6l4 2"></path>
+        </svg>
+        <p style="font-weight: 600; font-size: 16px; color: var(--color-text);">Onay bekleyen randevu bulunmuyor</p>
+        <p style="font-size: 14px; margin-top: 4px;">Yeni bir rezervasyon talebi geldiğinde burada görünecektir.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Sekme 2: Yaklaşan -->
+  <div data-tabs-target="panel" data-panel-name="upcoming" class="hidden">
+    <% if @upcoming.any? %>
+      <% @upcoming.each do |booking| %>
+        <div class="booking-card">
+          <div class="booking-card-top">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3 style="font-size: 17px; font-weight: 700;"><%= booking.invitee_name %></h3>
+                <span class="badge badge-confirmed">Onaylandı</span>
+              </div>
+              <div style="font-size: 14px; color: var(--color-text-secondary); margin-top: 2px;">
+                <%= booking.invitee_email %>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-weight: 600; color: var(--color-primary);"><%= booking.event_type.name %></span>
+              <span style="font-size: 13px; color: var(--color-text-secondary); display: block;">
+                <%= booking.event_type.duration_minutes %> dk
+              </span>
+            </div>
+          </div>
+
+          <div class="booking-card-body">
+            <div>
+              <span style="color: var(--color-text-muted); font-size: 12px; display: block;">Tarih & Saat</span>
+              <strong style="color: var(--color-primary);">
+                <%= booking.starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y, %H:%M") %> -
+                <%= booking.ends_at.in_time_zone("Istanbul").strftime("%H:%M") %>
+              </strong>
+            </div>
+          </div>
+
+          <div class="booking-card-actions">
+            <div style="font-size: 13px; color: var(--color-text-secondary);">
+              Davetli Bağlantısı: <%= link_to "/b/#{booking.token}", booking_status_path(booking.token), target: "_blank", class: "btn-link" %>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <%= button_to "Tamamlandı Olarak İşaretle", complete_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-outline" %>
+              <%= button_to "İptal Et", cancel_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-outline btn-danger", data: { turbo_confirm: "Randevuyu iptal etmek istediğinize emin misiniz?" } %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="card" style="text-align: center; padding: 48px 24px; color: var(--color-text-secondary);">
+        <p style="font-weight: 600; font-size: 16px; color: var(--color-text);">Yaklaşan randevunuz bulunmuyor</p>
+        <p style="font-size: 14px; margin-top: 4px;">Onaylanan veya anında kesinleşen randevular burada listelenir.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Sekme 3: Geçmiş -->
+  <div data-tabs-target="panel" data-panel-name="past" class="hidden">
+    <% if @past.any? %>
+      <% @past.each do |booking| %>
+        <div class="booking-card">
+          <div class="booking-card-top">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3 style="font-size: 16px; font-weight: 700;"><%= booking.invitee_name %></h3>
+                <span class="badge badge-<%= booking.status %>">
+                  <%= case booking.status
+                      when "completed" then "Tamamlandı"
+                      when "no_show" then "Gelmedi (No-Show)"
+                      when "declined" then "Reddedildi"
+                      when "canceled" then "İptal Edildi"
+                      when "expired" then "Süresi Doldu"
+                      else booking.status
+                      end %>
+                </span>
+                <% if SchedulingRules.repeat_no_show?(current_user, booking.invitee_email) %>
+                  <span class="badge badge-warning">Tekrar eden no-show</span>
+                <% end %>
+              </div>
+              <div style="font-size: 13px; color: var(--color-text-secondary); margin-top: 2px;">
+                <%= booking.invitee_email %>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-weight: 600;"><%= booking.event_type.name %></span>
+              <span style="font-size: 13px; color: var(--color-text-secondary); display: block;">
+                <%= booking.starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y, %H:%M") %>
+              </span>
+            </div>
+          </div>
+
+          <div class="booking-card-actions">
+            <div style="font-size: 13px; color: var(--color-text-secondary);">
+              Token: <code><%= booking.token %></code>
+            </div>
+            <div>
+              <% if SchedulingRules.can_mark_no_show?(booking) %>
+                <%= button_to "Gelmedi Olarak İşaretle (No-Show)", no_show_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-danger", data: { turbo_confirm: "Davetli bu toplantıya katılmadı mı? Katılmadı olarak işaretlemek istiyor musunuz?" } %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="card" style="text-align: center; padding: 48px 24px; color: var(--color-text-secondary);">
+        <p style="font-weight: 600; font-size: 16px; color: var(--color-text);">Geçmiş randevu kaydı bulunmuyor</p>
+      </div>
+    <% end %>
+  </div>
+</div>

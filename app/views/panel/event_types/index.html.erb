@@ -1,0 +1,54 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+  <div>
+    <h2>Randevu Türleri</h2>
+    <p>Davetlilerinizin seçebileceği randevu seçeneklerini yönetin.</p>
+  </div>
+  <%= link_to "+ Yeni Randevu Türü", new_panel_event_type_path, class: "btn btn-primary" %>
+</div>
+
+<% if @event_types.any? %>
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+    <% @event_types.each do |event_type| %>
+      <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <h3 style="font-size: 1.2rem;"><%= event_type.name %></h3>
+            <% if event_type.requires_approval? %>
+              <span class="badge badge-warning">Onay Gerekli</span>
+            <% else %>
+              <span class="badge badge-confirmed">Anında Onay</span>
+            <% end %>
+          </div>
+
+          <div style="font-size: 0.9rem; color: var(--color-text-secondary); margin-bottom: 16px;">
+            <div>⏱ <%= event_type.duration_minutes %> dakika</div>
+            <% if event_type.requires_approval? %>
+              <div>⏳ Onay süresi penceresi: <%= event_type.approval_window_hours %> saat</div>
+            <% end %>
+          </div>
+
+          <div style="background: var(--color-bg); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 0.825rem; word-break: break-all; margin-bottom: 16px;">
+            <span style="color: var(--color-text-secondary);">Rezervasyon linki:</span><br>
+            <%= link_to new_public_booking_url(slug: current_user.slug, event_type: event_type.slug), new_public_booking_path(slug: current_user.slug, event_type: event_type.slug), target: "_blank", style: "font-weight: 600;" %>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--color-border); padding-top: 12px;">
+          <%= link_to "Önizle", new_public_booking_path(slug: current_user.slug, event_type: event_type.slug), target: "_blank", class: "btn btn-sm btn-outline" %>
+          
+          <div style="display: flex; gap: 8px;">
+            <%= link_to "Düzenle", edit_panel_event_type_path(event_type), class: "btn btn-sm btn-secondary" %>
+            <%= button_to "Sil", panel_event_type_path(event_type), method: :delete, class: "btn btn-sm btn-outline btn-danger", data: { turbo_confirm: "'#{event_type.name}' türünü silmek istediğinize emin misiniz?" } %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="card empty-state">
+    <p>Henüz bir randevu türü eklemediniz.</p>
+    <div style="margin-top: 12px;">
+      <%= link_to "İlk Randevu Türünü Oluştur", new_panel_event_type_path, class: "btn btn-primary" %>
+    </div>
+  </div>
+<% end %>

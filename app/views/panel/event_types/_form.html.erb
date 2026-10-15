@@ -1,0 +1,41 @@
+<%= form_with model: [:panel, event_type], local: true, data: { controller: "toggle" } do |f| %>
+  <% if event_type.errors.any? %>
+    <div class="form-errors">
+      <strong>Lütfen formdaki hataları düzeltin:</strong>
+      <ul>
+        <% event_type.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :name, "Randevu Türü Adı", class: "form-label" %>
+    <%= f.text_field :name, class: "form-control", placeholder: "Örn: 1-e-1 Mentorluk, Tanıtım Görüşmesi", required: true %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :duration_minutes, "Görüşme Süresi (Dakika)", class: "form-label" %>
+    <%= f.select :duration_minutes, [15, 30, 45, 60].map { |m| ["#{m} dakika", m] }, {}, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <label class="form-check">
+      <%= f.check_box :requires_approval, data: { "toggle-target": "checkbox", action: "change->toggle#update" } %>
+      <span style="font-weight: 600;">Ev Sahibi Onayı Gerekli Olsun</span>
+    </label>
+    <div class="form-help">İşaretlenirse davetli rezervasyon oluşturduğunda talep "Onay Bekliyor" durumuna düşer.</div>
+  </div>
+
+  <div class="form-group" data-toggle-target="element">
+    <%= f.label :approval_window_hours, "Onay Süresi Limiti (Saat)", class: "form-label" %>
+    <%= f.number_field :approval_window_hours, class: "form-control", min: 1, max: 168, placeholder: "24" %>
+    <div class="form-help">Ev sahibi bu süre içinde onaylamazsa randevu otomatik olarak süresi doldu (expired) sayılır ve iptal edilir.</div>
+  </div>
+
+  <div style="display: flex; gap: 12px; margin-top: 24px;">
+    <%= f.submit (event_type.persisted? ? "Güncelle" : "Oluştur"), class: "btn btn-primary" %>
+    <%= link_to "İptal", panel_event_types_path, class: "btn btn-outline" %>
+  </div>
+<% end %>

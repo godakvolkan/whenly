@@ -1,0 +1,67 @@
+<div style="max-width: 680px; margin: 0 auto;">
+  <div style="margin-bottom: 20px;">
+    <%= link_to "← Panoya Dön", panel_root_path, class: "btn-link", style: "font-size: 14px; text-decoration: none;" %>
+  </div>
+
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+      <div>
+        <h1 style="font-size: 20px; font-weight: 700; color: var(--color-text); margin-bottom: 4px;">
+          <%= @booking.invitee_name %>
+        </h1>
+        <p style="color: var(--color-text-secondary); font-size: 14px;"><%= @booking.invitee_email %></p>
+      </div>
+      <div>
+        <span class="badge badge-<%= @booking.status %>">
+          <%= case @booking.status
+              when "pending" then "Onay Bekliyor"
+              when "confirmed" then "Onaylandı"
+              when "completed" then "Tamamlandı"
+              when "no_show" then "Gelmedi (No-Show)"
+              when "declined" then "Reddedildi"
+              when "canceled" then "İptal Edildi"
+              when "expired" then "Süresi Doldu"
+              else @booking.status
+              end %>
+        </span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; background-color: var(--color-bg); border-radius: 8px; margin-bottom: 24px;">
+      <div>
+        <span style="font-size: 12px; color: var(--color-text-muted); display: block;">Görüşme Türü</span>
+        <strong><%= @booking.event_type.name %></strong> (<%= @booking.event_type.duration_minutes %> dk)
+      </div>
+      <div>
+        <span style="font-size: 12px; color: var(--color-text-muted); display: block;">Tarih & Saat</span>
+        <strong style="color: var(--color-primary);">
+          <%= @booking.starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y, %H:%M") %> -
+          <%= @booking.ends_at.in_time_zone("Istanbul").strftime("%H:%M") %>
+        </strong>
+      </div>
+      <% if @booking.approval_deadline_at.present? %>
+        <div>
+          <span style="font-size: 12px; color: var(--color-text-muted); display: block;">Son Onay Süresi</span>
+          <span><%= @booking.approval_deadline_at.in_time_zone("Istanbul").strftime("%d.%m.%Y, %H:%M") %></span>
+        </div>
+      <% end %>
+      <div>
+        <span style="font-size: 12px; color: var(--color-text-muted); display: block;">Davetli Bağlantısı</span>
+        <%= link_to "/b/#{@booking.token}", booking_status_path(@booking.token), target: "_blank", class: "btn-link" %>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+      <% if @booking.pending? %>
+        <%= button_to "Onayla", confirm_panel_booking_path(@booking), method: :patch, class: "btn btn-success" %>
+        <%= button_to "Reddet", decline_panel_booking_path(@booking), method: :patch, class: "btn btn-danger", data: { turbo_confirm: "Talebi reddetmek istediğinize emin misiniz?" } %>
+      <% elsif @booking.confirmed? %>
+        <%= button_to "Tamamlandı Olarak İşaretle", complete_panel_booking_path(@booking), method: :patch, class: "btn btn-outline" %>
+        <% if SchedulingRules.can_mark_no_show?(@booking) %>
+          <%= button_to "Gelmedi (No-Show)", no_show_panel_booking_path(@booking), method: :patch, class: "btn btn-danger", data: { turbo_confirm: "Davetli görüşmeye katılmadı mı?" } %>
+        <% end %>
+        <%= button_to "İptal Et", cancel_panel_booking_path(@booking), method: :patch, class: "btn btn-outline btn-danger", data: { turbo_confirm: "Randevuyu iptal etmek istediğinize emin misiniz?" } %>
+      <% end %>
+    </div>
+  </div>
+</div>

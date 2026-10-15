@@ -1,0 +1,14 @@
+<% password_digest = BCrypt::Password.create("password") %>
+
+one:
+  name: Host One
+  email_address: one@example.com
+  password_digest: <%= password_digest %>
+  slug: host-one
+
+two:
+  name: Host Two
+  email_address: two@example.com
+  password_digest: <%= password_digest %>
+  slug: host-two
+

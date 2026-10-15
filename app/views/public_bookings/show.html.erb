@@ -1,0 +1,85 @@
+<div class="public-booking-layout">
+  <div class="booking-box">
+    <div class="booking-header" style="text-align: center; padding: 32px 24px;">
+      <% case @booking.status %>
+      <% when "pending" %>
+        <span class="badge badge-pending" style="font-size: 0.9rem; padding: 6px 14px; margin-bottom: 12px;">Onay Bekliyor</span>
+        <h1 class="booking-title">Randevu Talebiniz Alındı</h1>
+        <p>Ev sahibi randevunuzu inceledikten sonra onay durumu güncellenecektir.</p>
+        <% if @booking.approval_deadline_at.present? %>
+          <div style="margin-top: 12px;" data-controller="countdown" data-countdown-deadline-value="<%= @booking.approval_deadline_at.iso8601 %>">
+            <span class="countdown-box">
+              Onay için kalan süre: <span>Hesaplanıyor...</span>
+            </span>
+          </div>
+        <% end %>
+      <% when "confirmed" %>
+        <span class="badge badge-confirmed" style="font-size: 0.9rem; padding: 6px 14px; margin-bottom: 12px;">Onaylandı</span>
+        <h1 class="booking-title" style="color: var(--color-success);">Randevunuz Onaylandı!</h1>
+        <p>Toplantı saatinizde görüşmek üzere.</p>
+      <% when "declined" %>
+        <span class="badge badge-declined" style="font-size: 0.9rem; padding: 6px 14px; margin-bottom: 12px;">Reddedildi</span>
+        <h1 class="booking-title">Randevu Reddedildi</h1>
+        <p>Ev sahibi bu randevu talebini maalesef kabul edemedi.</p>
+      <% when "canceled" %>
+        <span class="badge badge-canceled" style="font-size: 0.9rem; padding: 6px 14px; margin-bottom: 12px;">İptal Edildi</span>
+        <h1 class="booking-title">Randevu İptal Edildi</h1>
+        <p>Bu randevu iptal edilmiştir.</p>
+      <% when "expired" %>
+        <span class="badge badge-expired" style="font-size: 0.9rem; padding: 6px 14px; margin-bottom: 12px;">Süresi Doldu</span>
+        <h1 class="booking-title">Randevu Süresi Doldu</h1>
+        <p>Onay süresi içerisinde ev sahibi tarafından yanıtlanmadığı için randevu geçersiz kılındı.</p>
+      <% when "completed" %>
+        <span class="badge badge-completed" style="font-size: 0.9rem; padding: 6px 14px; margin-bottom: 12px;">Tamamlandı</span>
+        <h1 class="booking-title">Görüşme Tamamlandı</h1>
+      <% when "no_show" %>
+        <span class="badge badge-danger" style="font-size: 0.9rem; padding: 6px 14px; margin-bottom: 12px;">Katılınmadı</span>
+        <h1 class="booking-title">Görüşmeye Katılınmadı</h1>
+      <% end %>
+    </div>
+
+    <div class="booking-body">
+      <div class="card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px; font-size: 1.1rem; border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">
+          Randevu Detayları
+        </h3>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <div class="form-label" style="margin-bottom: 2px;">Ev Sahibi</div>
+            <div style="font-weight: 600;"><%= @booking.user.name %></div>
+          </div>
+
+          <div>
+            <div class="form-label" style="margin-bottom: 2px;">Görüşme Türü</div>
+            <div style="font-weight: 600;"><%= @booking.event_type.name %> (<%= @booking.event_type.duration_minutes %> dk)</div>
+          </div>
+
+          <div>
+            <div class="form-label" style="margin-bottom: 2px;">Tarih ve Saat</div>
+            <div style="font-weight: 600; color: var(--color-primary); font-size: 1.05rem;">
+              <%= @booking.starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y, %H:%M") %> - <%= @booking.ends_at.in_time_zone("Istanbul").strftime("%H:%M") %>
+            </div>
+          </div>
+
+          <div>
+            <div class="form-label" style="margin-bottom: 2px;">Davetli</div>
+            <div><%= @booking.invitee_name %> (<%= @booking.invitee_email %>)</div>
+          </div>
+        </div>
+      </div>
+
+      <% if @booking.status.in?(%w[pending confirmed]) %>
+        <div style="text-align: center; margin-top: 16px;">
+          <%= button_to cancel_booking_path(@booking.token),
+                        method: :patch,
+                        class: "btn btn-outline btn-danger",
+                        style: "width: 100%;",
+                        data: { turbo_confirm: "Randevuyu iptal etmek istediğinize emin misiniz?" } do %>
+            Randevuyu İptal Et
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
