@@ -1,6 +1,6 @@
-# AGENT.md — SlotWise Gelistirme Surec Gunlugu
+# AGENT.md — Slotla Gelistirme Surec Gunlugu
 
-> Bu dosya, SlotWise projesinin AI kodlama ajanlari ile gelistirilme surecini belgelemektedir.
+> Bu dosya, Slotla projesinin AI kodlama ajanlari ile gelistirilme surecini belgelemektedir.
 > Ders geregi hazirlanmistir.
 
 ---
