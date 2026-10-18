@@ -1,5 +1,5 @@
 class Panel::BookingsController < Panel::BaseController
-  before_action :set_booking, only: [:show, :confirm, :decline, :cancel, :complete, :no_show]
+  before_action :set_booking, only: [:show, :confirm, :decline, :cancel, :expire, :complete, :no_show]
 
   def index
     redirect_to panel_root_path
