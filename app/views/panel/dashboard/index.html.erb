@@ -79,6 +79,7 @@
             <div style="display: flex; gap: 8px;">
               <%= button_to "Onayla", confirm_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-success" %>
               <%= button_to "Reddet", decline_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-danger", data: { turbo_confirm: "Bu randevu talebini reddetmek istediğinize emin misiniz?" } %>
+              <%= button_to "Süreyi Doldur (Simüle Et)", expire_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-outline", style: "border-color: #F59E0B; color: #D97706;", title: "SLA süresi dolmuş gibi randevuyu otomatik düşürür ve saati açar" %>
             </div>
           </div>
         </div>

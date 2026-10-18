@@ -15,6 +15,7 @@ Rails.application.routes.draw do
         patch :confirm
         patch :decline
         patch :cancel
+        patch :expire
         patch :complete
         patch :no_show
       end

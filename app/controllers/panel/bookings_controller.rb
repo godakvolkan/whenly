@@ -24,6 +24,12 @@ class Panel::BookingsController < Panel::BaseController
     transition_booking(:cancel!, "Randevu iptal edildi.")
   end
 
+  def expire
+    transition_booking(:expire!, "Randevu zaman aşımına uğratıldı (SLA süresi doldu olarak simüle edildi).") do
+      BookingMailer.booking_expired(@booking).deliver_later rescue nil
+    end
+  end
+
   def complete
     transition_booking(:complete!, "Randevu tamamlandı olarak işaretlendi.")
   end
