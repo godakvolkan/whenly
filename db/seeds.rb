@@ -7,14 +7,14 @@ user.update!(
 )
 
 # Randevu Türleri (Event Types)
-user.event_types.find_or_create_by!(slug: "mentorluk") do |et|
+mentorluk = user.event_types.find_or_create_by!(slug: "mentorluk") do |et|
   et.name = "Mentorluk"
   et.duration_minutes = 30
   et.requires_approval = true
   et.approval_window_hours = 24
 end
 
-user.event_types.find_or_create_by!(slug: "tanitim") do |et|
+tanitim = user.event_types.find_or_create_by!(slug: "tanitim") do |et|
   et.name = "Tanitim Gorusmesi"
   et.duration_minutes = 15
   et.requires_approval = false
@@ -32,34 +32,102 @@ end
 # Önceden oluşturulmuş randevuları temizle
 user.bookings.destroy_all
 
-# bayulgen5546@gmail.com için geçmişte 2 adet onaylı randevu ekle (Ev sahibi canlı olarak 'Gelmedi' işaretleyebilsin)
-mentorluk = user.event_types.find_by!(slug: "mentorluk")
+now = Time.current.in_time_zone("Istanbul")
 
-# 1. Randevu: Dün sabah (10:00 - 10:30)
-yesterday_morning = (Time.current - 1.day).in_time_zone("Istanbul").change(hour: 10, min: 0, sec: 0)
-user.bookings.create!(
-  event_type: mentorluk,
-  invitee_name: "Bayülgen Test",
-  invitee_email: "bayulgen5546@gmail.com",
-  starts_at: yesterday_morning,
-  ends_at: yesterday_morning + 30.minutes,
-  status: "confirmed"
-)
+# ============================================================
+# SENARYO 1: bayulgen5546@gmail.com — Kronik No-Show kuralı
+# 2 adet geçmiş randevu, ikisi de no_show olarak işaretli.
+# Demo: bayulgen "Tanitim" (normalde onay gerektirmez) için
+# randevu almaya çalışınca force_approval devreye girer → pending.
+# ============================================================
 
-# 2. Randevu: Bu sabah (09:00 - 09:30)
-today_morning = Time.current.in_time_zone("Istanbul").change(hour: 9, min: 0, sec: 0)
-# Eğer şu an saat 09:30'dan önceyse 2 gün öncesine alalım ki süresi geçmiş olsun
-if Time.current < today_morning + 30.minutes
-  today_morning = (Time.current - 2.days).in_time_zone("Istanbul").change(hour: 11, min: 0, sec: 0)
-end
+# 3 gün öncesinin Pazartesi-Cuma arasında bir güne düşmesini garanti et
+past_day_1 = (now - 5.days).change(hour: 10, min: 0, sec: 0)
+past_day_2 = (now - 3.days).change(hour: 14, min: 0, sec: 0)
 
 user.bookings.create!(
   event_type: mentorluk,
-  invitee_name: "Bayülgen Test",
+  invitee_name: "Bayulgen Test",
   invitee_email: "bayulgen5546@gmail.com",
-  starts_at: today_morning,
-  ends_at: today_morning + 30.minutes,
+  starts_at: past_day_1,
+  ends_at: past_day_1 + 30.minutes,
+  status: "no_show"
+)
+
+user.bookings.create!(
+  event_type: mentorluk,
+  invitee_name: "Bayulgen Test",
+  invitee_email: "bayulgen5546@gmail.com",
+  starts_at: past_day_2,
+  ends_at: past_day_2 + 30.minutes,
+  status: "no_show"
+)
+
+# ============================================================
+# SENARYO 2: volkangodak@gmail.com — Normal onay akışı
+# 1 adet pending randevu (Mentorluk, onay gerektirir).
+# Demo: Admin panelden onaylama veya reddetme gösterilir.
+# ============================================================
+
+# Yarından itibaren en yakın hafta içi günü bul
+future_day = now + 1.day
+future_day += 1.day while [6, 0].include?(future_day.wday)
+future_slot = future_day.change(hour: 11, min: 0, sec: 0)
+
+pending_booking = user.bookings.create!(
+  event_type: mentorluk,
+  invitee_name: "Volkan Godak",
+  invitee_email: "volkangodak@gmail.com",
+  starts_at: future_slot,
+  ends_at: future_slot + 30.minutes,
+  status: "pending",
+  approval_deadline_at: future_slot - 1.hour
+)
+
+# ============================================================
+# SENARYO 3: 231118058@samsun.edu.tr — Onaylı randevu + expire testi
+# 1 adet confirmed randevu (gelecekte) + 1 adet expired randevu.
+# Demo: Tamamlanan akış ve süresi dolmuş randevu görünümü.
+# ============================================================
+
+future_day_2 = future_day + 1.day
+future_day_2 += 1.day while [6, 0].include?(future_day_2.wday)
+future_slot_2 = future_day_2.change(hour: 14, min: 0, sec: 0)
+
+user.bookings.create!(
+  event_type: tanitim,
+  invitee_name: "Ogrenci Test",
+  invitee_email: "231118058@samsun.edu.tr",
+  starts_at: future_slot_2,
+  ends_at: future_slot_2 + 15.minutes,
   status: "confirmed"
 )
 
-puts "Seed tamamlandı: Host 'godakvolkan@gmail.com', bayulgen5546@gmail.com için geçmişe 2 adet onaylı randevu eklendi (Geçmiş sekmesinden 'Gelmedi / No-Show' işaretlenmeye hazır)."
+# Expired randevu: geçmişte oluşturulmuş ama onaylanmamış
+expired_slot = (now - 2.days).change(hour: 15, min: 0, sec: 0)
+user.bookings.create!(
+  event_type: mentorluk,
+  invitee_name: "Ogrenci Test",
+  invitee_email: "231118058@samsun.edu.tr",
+  starts_at: expired_slot,
+  ends_at: expired_slot + 30.minutes,
+  status: "expired",
+  approval_deadline_at: expired_slot - 1.hour
+)
+
+puts "=" * 60
+puts "SEED TAMAMLANDI"
+puts "=" * 60
+puts ""
+puts "Host: godakvolkan@gmail.com / password123"
+puts "Panel: /panel"
+puts ""
+puts "bayulgen5546@gmail.com  → 2x no_show (Mentorluk)"
+puts "  → Tanitim'da yeni randevu alırsa force_approval → pending"
+puts ""
+puts "volkangodak@gmail.com   → 1x pending (Mentorluk, #{future_slot.strftime('%d/%m %H:%M')})"
+puts "  → Panelden onayla/reddet gösterisi"
+puts ""
+puts "231118058@samsun.edu.tr → 1x confirmed (Tanitim, #{future_slot_2.strftime('%d/%m %H:%M')})"
+puts "                        → 1x expired (Mentorluk, geçmiş)"
+puts "=" * 60
