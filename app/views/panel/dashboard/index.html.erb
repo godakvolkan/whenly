@@ -186,7 +186,10 @@
             <div style="font-size: 13px; color: var(--color-text-secondary);">
               Token: <code><%= booking.token %></code>
             </div>
-            <div>
+            <div style="display: flex; gap: 8px;">
+              <% if booking.confirmed? %>
+                <%= button_to "Tamamlandı", complete_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-outline" %>
+              <% end %>
               <% if SchedulingRules.can_mark_no_show?(booking) %>
                 <%= button_to "Gelmedi Olarak İşaretle (No-Show)", no_show_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-danger", data: { turbo_confirm: "Davetli bu toplantıya katılmadı mı? Katılmadı olarak işaretlemek istiyor musunuz?" } %>
               <% end %>
