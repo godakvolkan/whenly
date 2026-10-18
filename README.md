@@ -6,10 +6,9 @@ Whenly, ev sahibinin gelen randevu taleplerini onaylayıp reddedebildiği, süre
 
 İlham kaynağı Calendly'dir. Calendly adı ve logosu uygulama arayüzünde kullanılmaz; yalnızca bu belgede ilham kaynağı olarak anılır.
 
-<!-- CI rozeti: Repo GitHub'a gönderildikten sonra KULLANICI_ADI ve REPO_ADI gerçek değerlerle değiştirilecek. -->
-[![CI](https://github.com/KULLANICI_ADI/REPO_ADI/actions/workflows/ci.yml/badge.svg)](https://github.com/KULLANICI_ADI/REPO_ADI/actions/workflows/ci.yml)
+[![CI](https://github.com/godakvolkan/whenly/actions/workflows/ci.yml/badge.svg)](https://github.com/godakvolkan/whenly/actions/workflows/ci.yml)
 
-**Canlı uygulama:** _(deploy sonrası eklenecek)_
+**Canlı uygulama:** _(Railway deploy sonrası eklenecek)_
 
 ---
 
