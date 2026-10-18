@@ -1,5 +1,5 @@
 class BookingMailer < ApplicationMailer
-  default from: -> { ENV.fetch("SMTP_FROM", ENV.fetch("SMTP_USERNAME", "Whenly <no-reply@whenly.dev>")) }
+  default from: -> { ENV.fetch("SMTP_FROM", ENV.fetch("SMTP_USERNAME", "bayulgen5546@gmail.com")) }
 
   # Davetliye: Randevu talebiniz alındı, ev sahibi onayı bekleniyor
   def pending_approval(booking)
