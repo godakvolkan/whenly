@@ -77,6 +77,6 @@ COPY --chown=rails:rails --from=build /rails /rails
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
-# Start server — use Thruster locally, plain Puma on Railway (PORT is dynamic)
-EXPOSE ${PORT:-3000}
-CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
+# Start server via shell form so $PORT is resolved by the shell
+EXPOSE 3000
+CMD ["bash", "-c", "./bin/rails db:prepare && exec ./bin/rails server -b 0.0.0.0 -p ${PORT:-3000}"]
