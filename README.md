@@ -8,7 +8,7 @@ Whenly, ev sahibinin gelen randevu taleplerini onaylayıp reddedebildiği, süre
 
 [![CI](https://github.com/godakvolkan/whenly/actions/workflows/ci.yml/badge.svg)](https://github.com/godakvolkan/whenly/actions/workflows/ci.yml)
 
-**Canlı uygulama:** _(Railway deploy sonrası eklenecek)_
+**Canlı uygulama:** https://c9fb131e3e8d06.lhr.life
 
 ---
 
