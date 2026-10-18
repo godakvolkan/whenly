@@ -1,0 +1,43 @@
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; color: #1e293b; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;">
+  <div style="margin-bottom: 20px;">
+    <span style="font-size: 20px; font-weight: 800; color: #4f46e5;">Whenly</span>
+  </div>
+
+  <div style="background: #fef3c7; border: 1px solid #fde68a; color: #92400e; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-weight: 600; font-size: 14px;">
+    ⏳ Randevu Talebiniz Alındı — Ev Sahibi Onayı Bekleniyor
+  </div>
+
+  <p style="font-size: 15px; line-height: 1.6;">
+    Merhaba <strong><%= @booking.invitee_name %></strong>,
+  </p>
+  <p style="font-size: 15px; line-height: 1.6;">
+    <strong><%= @user.name %></strong> ile <strong><%= @event_type.name %></strong> randevu talebiniz başarıyla oluşturuldu.
+  </p>
+
+  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0;">
+    <div style="font-size: 13px; color: #64748b; margin-bottom: 4px;">Talep Edilen Tarih ve Saat</div>
+    <div style="font-size: 16px; font-weight: 700; color: #0f172a;">
+      <%= @booking.starts_at.in_time_zone("Istanbul").strftime("%d %B %Y, %H:%M") %> (30 dk)
+    </div>
+    <% if @booking.approval_deadline_at %>
+      <div style="font-size: 12px; color: #d97706; margin-top: 8px;">
+        ⚠️ Onay Son Tarihi: <%= @booking.approval_deadline_at.in_time_zone("Istanbul").strftime("%d %B %Y, %H:%M") %>
+      </div>
+    <% end %>
+  </div>
+
+  <p style="font-size: 14px; color: #475569; line-height: 1.6;">
+    Ev sahibimiz talebinizi inceleyip onayladığında size yeni bir bilgilendirme e-postası iletilecektir. Süresi içinde onaylanmayan talepler otomatik olarak düşer ve takvim saati serbest kalır.
+  </p>
+
+  <div style="text-align: center; margin: 28px 0;">
+    <a href="<%= @status_url %>" style="display: inline-block; background: #4f46e5; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+      Randevu Durumunu Takip Et
+    </a>
+  </div>
+
+  <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+  <div style="font-size: 12px; color: #94a3b8; text-align: center;">
+    Whenly — Akıllı ve Kurallı Randevu Planlama
+  </div>
+</div>

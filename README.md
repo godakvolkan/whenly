@@ -234,11 +234,10 @@ Yerel çalıştırma: `bin/rails test`
 
 ## Yapamadıklarım
 
-1. **E-posta bildirimi yok.** Davetli, randevu durumunu oluşturma sonrasında yönlendirildiği `/b/:token` sayfasından takip eder. Render'ın ücretsiz planında e-posta gönderimi için harici bir servis gerekmektedir.
-2. **Ev sahibi kaydı yok.** Uygulamada yeni ev sahibi hesabı oluşturma ekranı bulunmamaktadır; demo, `db/seeds.rb` ile oluşturulan hesapla çalışır.
-3. **Arka plan işinin yayın ortamında çalıştığı henüz doğrulanmamıştır.** Süre kontrolü okuma anında yapıldığından iş akışının doğruluğu arka plan işine bağlı değildir.
-4. **Render ücretsiz plan sınırları:** Uygulama 15 dakika trafik almazsa uyku moduna geçer; ilk açılış yaklaşık 1 dakika sürer. Ücretsiz PostgreSQL veritabanı oluşturulduktan 30 gün sonra silinir ([Render](https://render.com/docs/free)).
-  "
+1. **Google Takvim (OAuth 2.0) iki yönlü senkronizasyonu yok.** Randevular Whenly veritabanında yönetilir, onay/durum e-postaları ActionMailer (Gmail SMTP) ile iletilir ve durum takibi `/b/:token` ekranından yapılır; doğrudan Google Calendar API senkronizasyonu dahil edilmemiştir.
+2. **Herkese açık yeni ev sahibi kaydı ekranı yok.** Uygulama kurumsal demo odaklıdır; ev sahibi hesabı `db/seeds.rb` ile oluşturulan yönetici hesabı (`godakvolkan@gmail.com`) ile çalışır.
+3. **Arka plan işinin yayın ortamında çalışması:** Süre kontrolü okuma anında yapıldığından iş akışının doğruluğu arka plan işine bağlı değildir.
+
 ---
 
 ## Kurulum ve Çalıştırma
@@ -253,12 +252,14 @@ bin/rails test
 bin/rails server
 ```
 
-**Demo hesabı**
+**Demo hesapları ve test verileri**
 
 | Alan | Değer |
 | :--- | :--- |
 | Ev sahibi paneli | `/session/new` |
-| E-posta | `demo@whenly.dev` |
+| Yönetici e-postası | `godakvolkan@gmail.com` |
 | Şifre | `password123` |
 | Davetli rezervasyon sayfası | `/volkan/mentorluk` |
-| Örnek durum sayfası | `/b/demo_pending_token` |
+| Onay bekleyen davetli (SMTP testi) | `volkangodak@gmail.com` (`/b/demo_pending_token`) |
+| 2 kez gelmeyen kronik no-show davetlisi | `bayulgen5546@gmail.com` (otomatik zorunlu onay demosu) |
+

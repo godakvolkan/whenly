@@ -9,11 +9,15 @@ class Panel::BookingsController < Panel::BaseController
   end
 
   def confirm
-    transition_booking(:confirm!, "Randevu onaylandı.")
+    transition_booking(:confirm!, "Randevu onaylandı.") do
+      BookingMailer.booking_confirmed(@booking).deliver_later rescue nil
+    end
   end
 
   def decline
-    transition_booking(:decline!, "Randevu reddedildi.")
+    transition_booking(:decline!, "Randevu reddedildi.") do
+      BookingMailer.booking_declined(@booking).deliver_later rescue nil
+    end
   end
 
   def cancel
@@ -40,6 +44,7 @@ class Panel::BookingsController < Panel::BaseController
 
   def transition_booking(method_name, success_message)
     @booking.public_send(method_name)
+    yield if block_given?
     redirect_back fallback_location: panel_root_path, notice: success_message
   rescue Booking::InvalidTransition => e
     redirect_back fallback_location: panel_root_path, alert: e.message

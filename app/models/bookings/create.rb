@@ -80,6 +80,12 @@ module Bookings
 
       begin
         if booking.save
+          if booking.status == "pending"
+            BookingMailer.pending_approval(booking).deliver_later rescue nil
+            BookingMailer.new_booking_request(booking).deliver_later rescue nil
+          else
+            BookingMailer.booking_confirmed(booking).deliver_later rescue nil
+          end
           Result.new(booking: booking, success?: true, error: nil)
         else
           Result.new(booking: booking, success?: false, error: booking.errors.full_messages.join(", "))
