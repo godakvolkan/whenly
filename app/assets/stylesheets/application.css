@@ -479,10 +479,30 @@ a:hover {
   transition: all 0.15s ease;
   text-align: center;
 }
-.slot-btn:hover, .slot-btn.selected {
+.slot-btn:hover:not(:disabled), .slot-btn.selected {
   background: var(--color-primary);
   color: #FFFFFF;
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+}
+.slot-btn:disabled, .slot-btn.disabled {
+  background: #F1F5F9;
+  border-color: #E2E8F0;
+  color: #94A3B8;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.75;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.slot-btn:disabled .slot-status-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #EF4444;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 /* Availability Rules Table/List */

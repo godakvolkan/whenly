@@ -1,11 +1,12 @@
 class PublicBookingsController < ApplicationController
   allow_unauthenticated_access
+  rescue_from ActiveRecord::RecordNotFound, with: :booking_not_found
 
   def new
     @user = User.find_by!(slug: params[:slug])
     @event_type = @user.event_types.find_by!(slug: params[:event_type])
     @date = params[:date].present? ? (Date.parse(params[:date]) rescue Date.current) : Date.current
-    @slots = SlotFinder.new(@user, @event_type, @date).available_slots
+    @slots = SlotFinder.new(@user, @event_type, @date).all_slots
     @booking = @user.bookings.new(event_type: @event_type)
   end
 
@@ -29,7 +30,7 @@ class PublicBookingsController < ApplicationController
               else
                 Date.current
               end
-      @slots = SlotFinder.new(@user, @event_type, @date).available_slots
+      @slots = SlotFinder.new(@user, @event_type, @date).all_slots
       render :new, status: :unprocessable_entity
     end
   end
@@ -52,5 +53,9 @@ class PublicBookingsController < ApplicationController
 
   def booking_params
     params.require(:booking).permit(:invitee_name, :invitee_email, :starts_at)
+  end
+
+  def booking_not_found
+    render "public_bookings/not_found", status: :not_found
   end
 end

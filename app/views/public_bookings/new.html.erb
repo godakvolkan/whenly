@@ -38,13 +38,23 @@
         <div class="slots-grid">
           <% @slots.each do |slot| %>
             <% time_str = slot[:starts_at].in_time_zone("Istanbul").strftime("%H:%M") %>
-            <button type="button"
-                    class="slot-btn"
-                    data-action="click->slot-select#select"
-                    data-starts-at="<%= slot[:starts_at].iso8601 %>"
-                    data-time-formatted="<%= time_str %>">
-              <%= time_str %>
-            </button>
+            <% if slot[:available] %>
+              <button type="button"
+                      class="slot-btn"
+                      data-action="click->slot-select#select"
+                      data-starts-at="<%= slot[:starts_at].iso8601 %>"
+                      data-time-formatted="<%= time_str %>">
+                <span><%= time_str %></span>
+              </button>
+            <% else %>
+              <button type="button"
+                      class="slot-btn disabled"
+                      disabled
+                      title="Bu saat dilimi rezerve edilmiştir">
+                <span style="text-decoration: line-through;"><%= time_str %></span>
+                <span class="slot-status-label">Dolu</span>
+              </button>
+            <% end %>
           <% end %>
         </div>
       <% else %>

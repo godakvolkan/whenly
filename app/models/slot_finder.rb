@@ -5,7 +5,7 @@ class SlotFinder
     @date = date.is_a?(String) ? Date.parse(date) : (date || Date.current)
   end
 
-  def available_slots
+  def all_slots
     rule = @user.availability_rules.find_by(day_of_week: @date.cwday)
     return [] unless rule
 
@@ -24,13 +24,19 @@ class SlotFinder
 
     while current + duration <= day_end
       slot_end = current + duration
-      if slot_available?(current, slot_end)
-        slots << { starts_at: current, ends_at: slot_end }
-      end
+      slots << {
+        starts_at: current,
+        ends_at: slot_end,
+        available: slot_available?(current, slot_end)
+      }
       current += duration
     end
 
     slots
+  end
+
+  def available_slots
+    all_slots.select { |s| s[:available] }
   end
 
   private
