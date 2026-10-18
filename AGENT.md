@@ -121,12 +121,23 @@ Ajanlara verilen görev tanımları `tasks/` klasöründedir.
 - `render.yaml` derleme komutuna `assets:precompile` eklendi.
 - Ürün adı Slotla'dan Whenly'ye değiştirildi; logo ve uygulama ikonu yenilendi. Ruby modül adı `Whenly` oldu. Yerel veritabanı adları (`slotwise_dev`, `slotwise_test`) mevcut kurulumu bozmamak için değiştirilmedi.
 
+### 18 Ekim 2026
+
+- ActionMailer e-posta bildirim sistemi entegre edildi (`BookingMailer` 5 şablonla eklendi: `pending_approval`, `new_booking_request`, `booking_confirmed`, `booking_declined`, `booking_expired`).
+- Gerçek Gmail SMTP yapılandırıldı ve test maillerinin teslimatı doğrulandı.
+- Silinmiş veya geçersiz randevu linkleri için `rescue_from ActiveRecord::RecordNotFound` ve `not_found.html.erb` eklendi.
+- `SlotFinder` dolu saatleri gizlemek yerine takvimde üzeri çizili ve kırmızı `DOLU` rozetiyle gösterecek şekilde güncellendi.
+- Panel sekmeleri (`tabs_controller.js`) eylem ve veri uyuşmazlığı giderilerek akıcı hale getirildi.
+- Kronik no-show kuralının canlı sunumu için `db/seeds.rb` içine `bayulgen5546@gmail.com` adına 2 adet geçmiş randevu eklendi ve panelden "Gelmedi (No-Show)" işaretleme desteği sağlandı.
+- SLA zaman aşımının canlı sunumu için Onay Bekleyenler kartına "Süreyi Doldur (Simüle Et)" butonu eklendi.
+- Canlı dağıtım hedefi Railway olarak belirlendi; Dockerfile ve entrypoint derleme adımları hazırlandı.
+- Tüm testler çalıştırıldı ve doğrulandı: 52 runs, 158 assertions, 0 failures, 0 errors.
+
 ### Sonraki adımlar
 
-- Bölüm 7'deki açık maddelerin kapatılması
-- GitHub'a gönderme ve CI sonucunun doğrulanması
-- Render'a yayın ve canlı ortamda uçtan uca deneme
-- README'deki "Gerçekleşen değerler" tablosunun güncellenmesi
+- GitHub'a gönderme ve CI sonucunun (yeşil rozet) doğrulanması
+- Railway'e yayın ve canlı ortamda uçtan uca deneme
+- README'deki CI rozeti ve canlı URL bağlantılarının güncellenmesi
 
 ---
 

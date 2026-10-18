@@ -193,7 +193,7 @@ Tüm zaman kuralları [`app/models/scheduling_rules.rb`](app/models/scheduling_r
 
 ### Süresi dolan taleplerin işlenmesi
 
-Render'ın ücretsiz planında uygulama 15 dakika trafik almazsa uyku moduna geçer ve bu sürede arka plan işleri çalışmaz. Bu nedenle süre kontrolü iki noktada yapılır:
+Bulut platformlarının ücretsiz veya başlangıç planlarında uygulama trafik almadığında uyku moduna geçebilir ve bu sürede zamanlanmış arka plan işleri gecikebilir. Bu nedenle süre kontrolü iki noktada yapılır:
 
 1. **Okuma anında:** Müsait saat hesaplanırken (`SlotFinder`) onay süresi geçmiş talepler dolu sayılmaz. Ev sahibi paneli açıldığında da süresi geçmiş talepler `expired` durumuna alınır.
 2. **Arka planda:** `ExpirePendingBookingsJob`, `config/recurring.yml` içinde her dakika çalışacak şekilde tanımlıdır.
@@ -260,6 +260,6 @@ bin/rails server
 | Yönetici e-postası | `godakvolkan@gmail.com` |
 | Şifre | `password123` |
 | Davetli rezervasyon sayfası | `/volkan/mentorluk` |
-| Onay bekleyen davetli (SMTP testi) | `volkangodak@gmail.com` (`/b/demo_pending_token`) |
-| 2 kez gelmeyen kronik no-show davetlisi | `bayulgen5546@gmail.com` (otomatik zorunlu onay demosu) |
+| Onay bekleyen davetli (SMTP testi) | `volkangodak@gmail.com` (canlı test için) |
+| 2 kez gelmeyen kronik no-show davetlisi | `bayulgen5546@gmail.com` (`seeds.rb` ile geçmişe eklenen 2 onaylı randevusu panelde No-Show işaretlenmeye hazır) |
 
