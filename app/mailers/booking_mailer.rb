@@ -19,7 +19,7 @@ class BookingMailer < ApplicationMailer
     @booking = booking
     @user = booking.user
     @event_type = booking.event_type
-    @dashboard_url = panel_dashboard_url(host: app_host)
+    @dashboard_url = panel_root_url(host: app_host)
 
     mail(
       to: @user.email_address,
