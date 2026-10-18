@@ -36,3 +36,6 @@
 # Ignore Claude Code settings
 /.claude/
 
+# Gizli sunum notları (yalnızca yerel)
+SUNUM_REHBERI.md
+
