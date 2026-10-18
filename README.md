@@ -77,7 +77,7 @@ Varsayımlar:
 - Satır başına ortalama 10 token (ders slaytı 28). 300.000 satır için yaklaşık 3 milyon çıktı token'ı gerekir.
 - Kodlama ajanı, yazdığı koddan yaklaşık 30 kat fazla içerik okur (kaynak dosyalar, test çıktıları, hata kayıtları). Bu da yaklaşık 90 milyon girdi token'ı eder.
 - Hata düzeltme ve yeniden yazma turları için 3 kat çarpan uygulanmıştır.
-- Fiyat: Claude Opus 5.5; girdi 4 $/milyon token, çıktı 20 $/milyon token ([AnotherWrapper](https://anotherwrapper.com/tools/llm-pricing/claude-opus-5-5), Anthropic fiyat sayfasına atıfla).
+- Fiyat: Claude Opus 5.5; girdi 4 $/milyon token, çıktı 20 $/milyon token ([Anthropic fiyat sayfası](https://platform.claude.com/docs/en/about-claude/pricing), erişim: 17.10.2026).
 
 | Kalem | Hesap | Tutar |
 | :--- | :--- | ---: |
@@ -88,7 +88,7 @@ Varsayımlar:
 
 Sonuç varsayımlara duyarlıdır; makul aralık 500 – 3.000 $'dır.
 
-**Süre:** Asıl darboğaz kod üretimi değil, üretilen kodun doğrulanmasıdır (ders slaytı 29). Tek geliştirici ve bir kodlama ajanıyla ürünün çekirdeği için 2–4 hafta, ana iş akışı için 2–3 gün öngörülmüştür.
+**Süre:** Asıl darboğaz kod üretimi değil, üretilen kodun doğrulanmasıdır . Tek geliştirici ve bir kodlama ajanıyla ürünün çekirdeği için 2–4 hafta, ana iş akışı için 2–3 gün öngörülmüştür.
 
 ### Gerçekleşen değerler
 
@@ -118,6 +118,7 @@ Calendly'de her rezervasyon, ev sahibinin onayı alınmadan doğrudan takvime i�
 
 Calendly'nin 2023 ve 2024 yanıtlarında belirttiği gerekçe: *"We've found that manual confirmation increases the steps you have to take to book meetings."*
 
+
 Kullanıcı talepleri (21.07.2026 tarihli başlık):
 
 - JeffreyLebowski, 26.07.2026: *"That's EXACTLY what I need - the ability to accept or decline a booking"*. Kullanıcı, onay e-postasının davetliye etkinliği ev sahibi karar vermeden takvimine ekleme imkânı verdiğini ve bunun müşteri ilişkisine zarar verebileceğini belirtmektedir.
@@ -139,9 +140,10 @@ Calendly'de bugün e-posta doğrulaması, reCAPTCHA v3, kişiyi elle engelleme, 
 
 | Özellik | Calendly | Whenly |
 | :--- | :--- | :--- |
-| Ev sahibi onayı (onay bekliyor → onayla / reddet) | Yok ([21.07.2026](https://community.calendly.com/how-do-i-40/approve-bookings-5906)) | Var |
-| Süresi içinde onaylanmayan talebin düşmesi ve saatin yeniden açılması | Yok ([04.03.2024](https://community.calendly.com/how-do-i-40/reconfirm-does-not-cancel-appointments-998)) | Var |
-| İki kez katılmayan davetlinin sonraki talebinin onaya düşmesi | Elle engelleme var; otomatik kural yardım sayfalarında yer almıyor | Var |
+| Ev sahibi onayı (onay bekliyor → onayla / reddet) | ❌ Yok ([21.07.2026](https://community.calendly.com/how-do-i-40/approve-bookings-5906)) | ✅ Var |
+| Süresi içinde onaylanmayan talebin düşmesi ve saatin yeniden açılması | ❌ Yok ([04.03.2024](https://community.calendly.com/how-do-i-40/reconfirm-does-not-cancel-appointments-998)) | ✅ Var |
+| İki kez katılmayan davetlinin sonraki talebinin onaya düşmesi | ❌ Elle engelleme var; otomatik kural yardım sayfalarında yer almıyor | ✅ Var |
+| Aynı davetlinin aynı gün içinde birden fazla randevu almasını engelleme | ❌ Yok ([28.07.2025](https://community.calendly.com/how-do-i-40/how-can-i-prevent-duplicate-bookings-e-g-same-email-booking-multiple-times-in-one-day-in-calendly-4351)) | ✅ Var |
 
 ---
 
@@ -187,6 +189,7 @@ Tüm zaman kuralları [`app/models/scheduling_rules.rb`](app/models/scheduling_r
 1. **Asgari ön süre:** Randevu, başlangıcından en az 2 saat önce alınmalıdır (`bookable?`).
 2. **Onay süresi:** Onay son tarihi, talebin oluşturulmasından itibaren onay penceresi (varsayılan 24 saat) ile toplantıdan 1 saat öncesinin erken olanıdır (`approval_deadline_for`). Bu süre içinde onaylanmayan talep `expired` durumuna geçer.
 3. **Katılımsızlık kuralı:** Bir randevu, bitişinden 15 dakika sonra "katılmadı" olarak işaretlenebilir (`can_mark_no_show?`). İki kez katılmayan davetlinin yeni talebi onaya düşer (`force_approval?`).
+4. **Mükerrer randevu engeli:** Aynı davetli (e-posta), aynı gün içinde yalnızca bir aktif randevu oluşturabilir (`has_booking_on_day?`).
 
 ### Süresi dolan taleplerin işlenmesi
 
@@ -205,23 +208,23 @@ Rezervasyon oluşturma kuralları model geri çağrılarında (callback) değil,
 
 Testler Minitest ile yazılmıştır. Zaman kuralları ActiveSupport'un `travel_to` yardımcısıyla test edilir. Testler her `push` işleminde GitHub Actions üzerinde PostgreSQL ile çalıştırılır; güncel sonuç sayfanın başındaki CI rozetinde görülür.
 
-**Güncel Doğrulanmış Test Raporu (15.10.2026):**
+**Güncel Doğrulanmış Test Raporu (18.10.2026):**
 ```text
-Run options: --seed 40597
+Run options: --seed 54791
 
 # Running:
-...................................................
+....................................................
 
-Finished in 4.004651s, 12.7352 runs/s, 38.2056 assertions/s.
-51 runs, 153 assertions, 0 failures, 0 errors, 0 skips
+Finished in 17.406365s, 2.9874 runs/s, 9.0771 assertions/s.
+52 runs, 158 assertions, 0 failures, 0 errors, 0 skips
 ```
 
 | Dosya | Kapsam |
 | :--- | :--- |
 | `test/models/booking_test.rb` | İzin verilen geçişler, yasak geçişler, aynı saate çift rezervasyon, süresi dolmuş onayın reddi, e-posta normalizasyonu |
-| `test/models/scheduling_rules_test.rb` | Üç zaman kuralı, katılımsızlık kuralı (`travel_to`), büyük/küçük harf duyarsız no-show tespiti |
+| `test/models/scheduling_rules_test.rb` | Dört zaman kuralı, katılımsızlık kuralı (`travel_to`), aynı gün mükerrer randevu engeli (`travel_to`), büyük/küçük harf duyarsız no-show tespiti |
 | `test/models/slot_finder_test.rb` | Müsait saat hesaplama, süresi dolan talebin saati serbest bırakması |
-| `test/models/bookings/create_test.rb` | Rezervasyon oluşturma servisi, çalışma saatleri kontrolü, çakışma kontrolü, süresi dolan talebin otomatik düşmesi |
+| `test/models/bookings/create_test.rb` | Rezervasyon oluşturma servisi, çalışma saatleri kontrolü, çakışma kontrolü, aynı gün mükerrer engel, süresi dolan talebin otomatik düşmesi |
 | `test/jobs/expire_pending_bookings_job_test.rb` | Süresi dolan taleplerin işlenmesi |
 | `test/controllers/public_bookings_controller_test.rb` | Davetli ekranları, token ile durum takibi, davetli iptali |
 
@@ -233,10 +236,9 @@ Yerel çalıştırma: `bin/rails test`
 
 1. **E-posta bildirimi yok.** Davetli, randevu durumunu oluşturma sonrasında yönlendirildiği `/b/:token` sayfasından takip eder. Render'ın ücretsiz planında e-posta gönderimi için harici bir servis gerekmektedir.
 2. **Ev sahibi kaydı yok.** Uygulamada yeni ev sahibi hesabı oluşturma ekranı bulunmamaktadır; demo, `db/seeds.rb` ile oluşturulan hesapla çalışır.
-3. **Aynı davetlinin aynı gün içinde farklı saatlere birden fazla randevu alması engellenmemektedir.** Çakışma kontrolü yalnızca ev sahibinin aynı zaman dilimindeki randevularını kapsar.
-4. **Arka plan işinin yayın ortamında çalıştığı henüz doğrulanmamıştır.** Süre kontrolü okuma anında yapıldığından iş akışının doğruluğu arka plan işine bağlı değildir.
-5. **Render ücretsiz plan sınırları:** Uygulama 15 dakika trafik almazsa uyku moduna geçer; ilk açılış yaklaşık 1 dakika sürer. Ücretsiz PostgreSQL veritabanı oluşturulduktan 30 gün sonra silinir ([Render](https://render.com/docs/free)).
-
+3. **Arka plan işinin yayın ortamında çalıştığı henüz doğrulanmamıştır.** Süre kontrolü okuma anında yapıldığından iş akışının doğruluğu arka plan işine bağlı değildir.
+4. **Render ücretsiz plan sınırları:** Uygulama 15 dakika trafik almazsa uyku moduna geçer; ilk açılış yaklaşık 1 dakika sürer. Ücretsiz PostgreSQL veritabanı oluşturulduktan 30 gün sonra silinir ([Render](https://render.com/docs/free)).
+  "
 ---
 
 ## Kurulum ve Çalıştırma

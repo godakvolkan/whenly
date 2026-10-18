@@ -37,7 +37,7 @@ class PublicBookingsControllerTest < ActionDispatch::IntegrationTest
         }
       end
 
-      booking = Booking.order(created_at: :desc).first
+      booking = Booking.find_by!(invitee_email: "yeni@example.com")
       assert_redirected_to booking_status_url(booking.token)
       assert_equal "pending", booking.status
     end

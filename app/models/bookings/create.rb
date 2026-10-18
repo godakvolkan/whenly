@@ -61,6 +61,15 @@ module Bookings
         end
       end
 
+      # 5. Aynı gün içinde aynı davetlinin mükerrer randevu almasını engelleme kuralı
+      if starts_at.present? && SchedulingRules.has_booking_on_day?(@user, booking.invitee_email, starts_at)
+        return Result.new(
+          booking: booking,
+          success?: false,
+          error: "Aynı gün içinde yalnızca bir randevu oluşturabilirsiniz."
+        )
+      end
+
       # 5. Onay zorunluluğu (Normal kural veya Tekrar eden No-Show kuralı)
       force_pending = SchedulingRules.force_approval?(@user, booking.invitee_email, @event_type)
       booking.status = force_pending ? "pending" : "confirmed"

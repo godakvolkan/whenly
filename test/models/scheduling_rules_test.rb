@@ -200,4 +200,53 @@ class SchedulingRulesTest < ActiveSupport::TestCase
     assert SchedulingRules.repeat_no_show?(@user, "DeNeMe_VaKa@ExAmPlE.cOm")
     assert SchedulingRules.force_approval?(@user, "DENEME_VAKA@EXAMPLE.COM", @instant_event)
   end
+
+  # --- Kural 4: Aynı Davetlinin Aynı Gün Mükerrer Randevu Almasını Engelleme ---
+
+  test "rule 4: prevents duplicate bookings by same invitee on the same day" do
+    reference_time = Time.zone.parse("2026-10-20 10:00:00")
+    travel_to reference_time do
+      email = "ayni_gun@example.com"
+      slot1 = reference_time + 4.hours # 14:00
+      slot2 = reference_time + 6.hours # 16:00
+
+      # İlk randevu oluşturulur
+      result1 = Bookings::Create.new(
+        user: @user,
+        event_type: @approval_event,
+        params: {
+          invitee_name: "Tekrarlı Davetli",
+          invitee_email: email,
+          starts_at: slot1.iso8601
+        }
+      ).call
+      assert result1.success?
+
+      # Aynı gün farklı bir saate ikinci randevu denenir -> reddedilmeli
+      result2 = Bookings::Create.new(
+        user: @user,
+        event_type: @approval_event,
+        params: {
+          invitee_name: "Tekrarlı Davetli",
+          invitee_email: email.upcase, # büyük/küçük harf duyarsız olmalı
+          starts_at: slot2.iso8601
+        }
+      ).call
+      assert_not result2.success?
+      assert_includes result2.error, "Aynı gün içinde yalnızca bir randevu"
+
+      # Ancak ertesi güne randevu alabilir -> izin verilmeli
+      next_day_slot = slot1 + 1.day
+      result3 = Bookings::Create.new(
+        user: @user,
+        event_type: @approval_event,
+        params: {
+          invitee_name: "Tekrarlı Davetli",
+          invitee_email: email,
+          starts_at: next_day_slot.iso8601
+        }
+      ).call
+      assert result3.success?
+    end
+  end
 end

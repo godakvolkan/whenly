@@ -35,4 +35,15 @@ class SchedulingRules
   def self.force_approval?(user, invitee_email, event_type)
     event_type.requires_approval || repeat_no_show?(user, invitee_email)
   end
+
+  # Kural 4: Aynı davetlinin aynı gün içinde birden fazla aktif randevu almasını engelleme
+  def self.has_booking_on_day?(user, invitee_email, starts_at)
+    return false if user.nil? || invitee_email.blank? || starts_at.nil?
+    email = invitee_email.to_s.strip.downcase
+    day_range = starts_at.in_time_zone("Istanbul").all_day
+    user.bookings.active
+        .where("LOWER(invitee_email) = ?", email)
+        .where(starts_at: day_range)
+        .exists?
+  end
 end
