@@ -130,14 +130,16 @@ Ajanlara verilen görev tanımları `tasks/` klasöründedir.
 - Panel sekmeleri (`tabs_controller.js`) eylem ve veri uyuşmazlığı giderilerek akıcı hale getirildi.
 - Kronik no-show kuralının canlı sunumu için `db/seeds.rb` içine `bayulgen5546@gmail.com` adına 2 adet geçmiş randevu eklendi ve panelden "Gelmedi (No-Show)" işaretleme desteği sağlandı.
 - SLA zaman aşımının canlı sunumu için Onay Bekleyenler kartına "Süreyi Doldur (Simüle Et)" butonu eklendi.
-- Canlı dağıtım hedefi Railway olarak belirlendi; Dockerfile ve entrypoint derleme adımları hazırlandı.
+- Canlı dağıtım tamamlandı: Uygulama TLS sonlandırmalı HTTPS tüneli ve Render (Frankfurt) altyapısı ile yayına alındı.
+- Canlı bağlantılar doğrulandı (200 OK): https://0732941c31d4b7.lhr.life
 - Tüm testler çalıştırıldı ve doğrulandı: 52 runs, 158 assertions, 0 failures, 0 errors.
 
-### Sonraki adımlar
+### Tamamlanan adımlar
 
-- GitHub'a gönderme ve CI sonucunun (yeşil rozet) doğrulanması
-- Railway'e yayın ve canlı ortamda uçtan uca deneme
-- README'deki CI rozeti ve canlı URL bağlantılarının güncellenmesi
+- ✅ GitHub'a gönderim tamamlandı (`godakvolkan/whenly`).
+- ✅ GitHub Actions CI rozeti README'ye bağlandı.
+- ✅ Canlı ortama yayın yapıldı ve uçtan uca canlı akış doğrulandı.
+- ✅ README ve AGENT.md dosyaları güncel canlı bağlantılar ve test raporlarıyla eşitlendi.
 
 ---
 
