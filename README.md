@@ -110,25 +110,25 @@ Calendly'de her rezervasyon, ev sahibinin onayı alınmadan doğrudan takvime i�
 
 | Tarih | Yanıtlayan | Alıntı | Görüntülenme | Kaynak |
 | :--- | :--- | :--- | ---: | :--- |
-| 29.10.2023 | Kelsi (CalPal Emeritus) | *"Unfortunately, Calendly does not currently support manual confirmations."* | 5.474 | [Approving before accepting](https://community.calendly.com/how-do-i-40/approving-before-accepting-277) |
+| 29.10.2023 | Kelsi (CalPal Emeritus) | *"Unfortunately, Calendly does not currently support manual confirmations."* (Maalesef Calendly şu anda elle onaylamayı desteklemiyor.) | 5.474 | [Approving before accepting](https://community.calendly.com/how-do-i-40/approving-before-accepting-277) |
 | 21.11.2023 | Kelsi (CalPal Emeritus) | Aynı ifade | 3.904 | [Approve bookings](https://community.calendly.com/how-do-i-40/approve-bookings-415) |
 | 19.02.2024 | Kelsi (CalPal Emeritus) | Aynı ifade | 1.028 | [Manual confirmations](https://community.calendly.com/how-do-i-40/does-calendly-support-manual-confirmations-reconfirmations-of-bookings-908) |
-| 01.12.2025 | David (Community Manager) | *"Right now there is not a way to manually confirm events that are scheduled through Calendly."* | 145 | [Manual approval for internal use](https://community.calendly.com/api-webhook-help-61/manual-approval-feature-for-internal-company-use-5071) |
-| 21.07.2026 | Allie M (Community Manager) | *"Right now, there isn't a native "pending approval" feature in Calendly."* | 162 | [Approve bookings](https://community.calendly.com/how-do-i-40/approve-bookings-5906) |
+| 01.12.2025 | David (Community Manager) | *"Right now there is not a way to manually confirm events that are scheduled through Calendly."* (Şu anda Calendly üzerinden planlanan etkinlikleri elle onaylamanın bir yolu yok.) | 145 | [Manual approval for internal use](https://community.calendly.com/api-webhook-help-61/manual-approval-feature-for-internal-company-use-5071) |
+| 21.07.2026 | Allie M (Community Manager) | *"Right now, there isn't a native "pending approval" feature in Calendly."* (Şu anda Calendly'de yerel bir "onay bekleme" özelliği bulunmuyor.) | 162 | [Approve bookings](https://community.calendly.com/how-do-i-40/approve-bookings-5906) |
 
-Calendly'nin 2023 ve 2024 yanıtlarında belirttiği gerekçe: *"We've found that manual confirmation increases the steps you have to take to book meetings."*
+Calendly'nin 2023 ve 2024 yanıtlarında belirttiği gerekçe: *"We've found that manual confirmation increases the steps you have to take to book meetings."* (Elle onaylamanın, toplantı planlamak için atmanız gereken adımları artırdığını tespit ettik.)
 
 
 Kullanıcı talepleri (21.07.2026 tarihli başlık):
 
-- JeffreyLebowski, 26.07.2026: *"That's EXACTLY what I need - the ability to accept or decline a booking"*. Kullanıcı, onay e-postasının davetliye etkinliği ev sahibi karar vermeden takvimine ekleme imkânı verdiğini ve bunun müşteri ilişkisine zarar verebileceğini belirtmektedir.
-- Lee73645, 30.07.2026: *"I would desperately like to have this ability as well."*
+- JeffreyLebowski, 26.07.2026: *"That's EXACTLY what I need - the ability to accept or decline a booking"* (Tam da ihtiyacım olan şey bu — bir randevuyu kabul etme veya reddetme imkânı). Kullanıcı, onay e-postasının davetliye etkinliği ev sahibi karar vermeden takvimine ekleme imkânı verdiğini ve bunun müşteri ilişkisine zarar verebileceğini belirtmektedir.
+- Lee73645, 30.07.2026: *"I would desperately like to have this ability as well."* (Bu özelliğe çok ihtiyacım var, ben de istiyorum.)
 
 ### İlgili diğer kaynaklar
 
 | Tarih | Konu | Calendly'nin yanıtı | Kaynak |
 | :--- | :--- | :--- | :--- |
-| 04.03.2024 | Yeniden onay akışı, onaylanmayan randevuyu iptal etmiyor | *"there is no functionality that allows for an event to be automatically cancelled"* | [Reconfirm does not cancel](https://community.calendly.com/how-do-i-40/reconfirm-does-not-cancel-appointments-998) |
+| 04.03.2024 | Yeniden onay akışı, onaylanmayan randevuyu iptal etmiyor | *"there is no functionality that allows for an event to be automatically cancelled"* (Bir etkinliğin otomatik olarak iptal edilmesini sağlayan bir işlev bulunmuyor.) | [Reconfirm does not cancel](https://community.calendly.com/how-do-i-40/reconfirm-does-not-cancel-appointments-998) |
 | 06.03.2024 | Sürekli randevu alıp katılmayan kişiyi engelleme (11 yanıt, 7.907 görüntülenme) | O tarihte engelleme özelliği yoktu. Günümüzde elle engelleme mevcuttur ([yardım sayfası](https://calendly.com/help/how-to-block-someone-from-booking-with-you.html)); tekrar eden katılımsızlığa otomatik uygulanan bir kural yardım sayfalarında yer almamaktadır. | [Block a person](https://community.calendly.com/how-do-i-40/block-a-person-from-scheduling-1009) |
 | 25.11.2025 | Özel ders veren bir eğitmen, öğrenci derse gelmediğinde randevu alındığını gösteren bir kaydının olmadığını belirtiyor | — | [Capterra](https://www.capterra.com/p/148036/Calendly/reviews/) |
 
