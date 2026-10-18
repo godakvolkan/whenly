@@ -251,14 +251,15 @@ bin/rails test
 bin/rails server
 ```
 
-**Demo hesapları ve test verileri**
+**Demo hesapları ve canlı erişim bağlantıları**
 
 | Alan | Değer |
 | :--- | :--- |
-| Ev sahibi paneli | `/session/new` |
+| Canlı Uygulama | https://c9fb131e3e8d06.lhr.life |
+| Ev sahibi paneli | https://c9fb131e3e8d06.lhr.life/panel (`/session/new`) |
 | Yönetici e-postası | `godakvolkan@gmail.com` |
 | Şifre | `password123` |
-| Davetli rezervasyon sayfası | `/volkan/mentorluk` |
+| Davetli rezervasyon sayfası | https://c9fb131e3e8d06.lhr.life/volkan/mentorluk |
 | Onay bekleyen davetli (SMTP testi) | `volkangodak@gmail.com` (canlı test için) |
 | 2 kez gelmeyen kronik no-show davetlisi | `bayulgen5546@gmail.com` (`seeds.rb` ile geçmişe eklenen 2 onaylı randevusu panelde No-Show işaretlenmeye hazır) |
 
