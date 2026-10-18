@@ -62,6 +62,10 @@ Rails.application.configure do
   # Allow all hosts (for public demo tunnels and custom domains)
   config.hosts.clear
 
+  # Trust forwarded headers from tunnel proxies (lhr.life, ngrok, etc.)
+  config.assume_ssl = ENV.fetch("ASSUME_SSL", "false") == "true"
+  config.action_controller.forgery_protection_origin_check = false
+
   # Append comments with runtime information tags to SQL queries in logs.
   config.active_record.query_log_tags_enabled = true
 

@@ -2,9 +2,10 @@ services:
   - type: web
     name: whenly
     runtime: ruby
+    region: frankfurt
     plan: free
-    buildCommand: bundle install && bundle exec rails assets:precompile
-    startCommand: bundle exec rails db:prepare && bundle exec rails db:seed && bundle exec rails server -b 0.0.0.0 -p $PORT
+    buildCommand: bash bin/render-build.sh
+    startCommand: bundle exec rails server -b 0.0.0.0 -p $PORT
     envVars:
       - key: RAILS_MASTER_KEY
         sync: false
@@ -21,4 +22,5 @@ services:
 
 databases:
   - name: whenly-db
+    region: frankfurt
     plan: free
