@@ -131,7 +131,7 @@ Ajanlara verilen görev tanımları `tasks/` klasöründedir.
 - Kronik no-show kuralının canlı sunumu için `db/seeds.rb` içine `bayulgen5546@gmail.com` adına 2 adet geçmiş randevu eklendi ve panelden "Gelmedi (No-Show)" işaretleme desteği sağlandı.
 - SLA zaman aşımının canlı sunumu için Onay Bekleyenler kartına "Süreyi Doldur (Simüle Et)" butonu eklendi.
 - Canlı dağıtım tamamlandı: Uygulama TLS sonlandırmalı HTTPS tüneli ve Render (Frankfurt) altyapısı ile yayına alındı.
-- Canlı bağlantılar doğrulandı (200 OK): https://0732941c31d4b7.lhr.life
+- Canlı bağlantılar doğrulandı (200 OK): https://whenly-cpyy.onrender.com
 - Tüm testler çalıştırıldı ve doğrulandı: 52 runs, 158 assertions, 0 failures, 0 errors.
 
 ### Tamamlanan adımlar

@@ -8,7 +8,9 @@ Whenly, ev sahibinin gelen randevu taleplerini onaylayıp reddedebildiği, süre
 
 [![CI](https://github.com/godakvolkan/whenly/actions/workflows/ci.yml/badge.svg)](https://github.com/godakvolkan/whenly/actions/workflows/ci.yml)
 
-**Canlı uygulama:** https://0732941c31d4b7.lhr.life
+**Canlı uygulama:** https://whenly-cpyy.onrender.com
+
+**Kaynak kod:** https://github.com/godakvolkan/whenly
 
 ---
 
@@ -255,11 +257,11 @@ bin/rails server
 
 | Alan | Değer |
 | :--- | :--- |
-| Canlı Uygulama | https://0732941c31d4b7.lhr.life |
-| Ev sahibi paneli | https://0732941c31d4b7.lhr.life/panel (`/session/new`) |
+| Canlı Uygulama | https://whenly-cpyy.onrender.com |
+| Ev sahibi paneli | https://whenly-cpyy.onrender.com/panel (`/session/new`) |
 | Yönetici e-postası | `godakvolkan@gmail.com` |
 | Şifre | `password123` |
-| Davetli rezervasyon sayfası | https://0732941c31d4b7.lhr.life/volkan/mentorluk |
+| Davetli rezervasyon sayfası | https://whenly-cpyy.onrender.com/volkan/mentorluk |
 | Onay bekleyen davetli (SMTP testi) | `volkangodak@gmail.com` (canlı test için) |
 | 2 kez gelmeyen kronik no-show davetlisi | `bayulgen5546@gmail.com` (`seeds.rb` ile geçmişe eklenen 2 onaylı randevusu panelde No-Show işaretlenmeye hazır) |
 
