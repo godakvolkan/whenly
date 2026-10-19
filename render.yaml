@@ -6,6 +6,7 @@ services:
     plan: free
     buildCommand: bash bin/render-build.sh
     startCommand: bundle exec rails server -b 0.0.0.0 -p $PORT
+    healthCheckPath: /up
     envVars:
       - key: RAILS_MASTER_KEY
         sync: false
@@ -15,12 +16,6 @@ services:
         value: "false"
       - key: ASSUME_SSL
         value: "false"
+      # Mevcut ücretsiz veritabanının (whenly-db) Internal Database URL'i elle girilir.
       - key: DATABASE_URL
-        fromDatabase:
-          name: whenly-db
-          property: connectionString
-
-databases:
-  - name: whenly-db
-    region: frankfurt
-    plan: free
+        sync: false
