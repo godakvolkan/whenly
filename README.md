@@ -95,9 +95,9 @@ Sonuç varsayımlara duyarlıdır; makul aralık 500 – 3.000 $'dır.
 
 | Kalem | Tahmin | Gerçekleşen |
 | :--- | :--- | :--- |
-| Ana iş akışı satır sayısı | 3.000 – 6.000 | 3.060 satır (`cloc`, `app` + `config` + `db` + `test`, 15.10.2026) |
+| Ana iş akışı satır sayısı | 3.000 – 6.000 | ~3.470 satır (`app` + `config` + `db` + `test`, 19.10.2026 güncel) |
 | Maliyet | 500 – 3.000 $ | ~$2.50 token/API harcaması (öğrenci API kredisi), ek ücret yok, Render Free Hosting ($0) |
-| Süre | 2 – 3 gün | 2 gün (14 Ekim araştırma/mimari, 15 Ekim geliştirme ve test) |
+| Süre | 2 – 3 gün | 2–3 gün (Araştırma, mimari, geliştirme, testler ve canlıya alma) |
 
 ---
 

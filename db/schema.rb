@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_18_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_20_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -215,6 +215,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_18_210000) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "telegram_sessions", force: :cascade do |t|
+    t.bigint "chat_id", null: false
+    t.string "state", default: "idle", null: false
+    t.jsonb "data", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chat_id"], name: "index_telegram_sessions_on_chat_id", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "name", null: false
     t.string "email_address", null: false
@@ -222,8 +231,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_18_210000) do
     t.string "slug", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "telegram_chat_id"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["slug"], name: "index_users_on_slug", unique: true
+    t.index ["telegram_chat_id"], name: "index_users_on_telegram_chat_id", unique: true
   end
 
   add_foreign_key "availability_rules", "users"

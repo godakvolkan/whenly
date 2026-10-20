@@ -3,13 +3,13 @@ class SchedulingRules
   NO_SHOW_THRESHOLD = 2
   NO_SHOW_MARKING_DELAY_MINUTES = 15
 
-  # Kural 1: En az 2 saat onceden rezervasyon
+  # 2
   def self.bookable?(starts_at)
     return false if starts_at.nil?
     starts_at >= MINIMUM_NOTICE_HOURS.hours.from_now
   end
 
-  # Kural 2: Onay suresi hesaplama
+  # osha
   def self.approval_deadline_for(booking)
     created_at = booking.created_at || Time.current
     approval_hours = booking.event_type&.approval_window_hours || 24
@@ -18,25 +18,25 @@ class SchedulingRules
     [event_window, meeting_cutoff].min
   end
 
-  # Kural 3: Gelmeme kontrolu
+  # 
   def self.repeat_no_show?(user, invitee_email)
     return false if user.nil? || invitee_email.blank?
     email = invitee_email.to_s.strip.downcase
     Booking.where(user: user, status: "no_show").where("LOWER(invitee_email) = ?", email).count >= NO_SHOW_THRESHOLD
   end
 
-  # Kural 3 devami: no_show isaretlenebilir mi?
+  #
   def self.can_mark_no_show?(booking)
     booking.status == "confirmed" &&
       Time.current >= booking.ends_at + NO_SHOW_MARKING_DELAY_MINUTES.minutes
   end
 
-  # Kural 3 devami: bu davetli icin onay zorunlu mu?
+  # oz
   def self.force_approval?(user, invitee_email, event_type)
     event_type.requires_approval || repeat_no_show?(user, invitee_email)
   end
 
-  # Kural 4: Aynı davetlinin aynı gün içinde birden fazla aktif randevu almasını engelleme
+  # 
   def self.has_booking_on_day?(user, invitee_email, starts_at)
     return false if user.nil? || invitee_email.blank? || starts_at.nil?
     email = invitee_email.to_s.strip.downcase

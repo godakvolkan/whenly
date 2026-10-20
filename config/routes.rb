@@ -2,6 +2,8 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
 
+  post "telegram/webhook", to: "telegram_webhook#create"
+
   get "up" => "rails/health#show", as: :rails_health_check
 
   # Root route redirects to panel

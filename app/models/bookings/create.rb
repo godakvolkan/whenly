@@ -86,6 +86,7 @@ module Bookings
           else
             BookingMailer.booking_confirmed(booking).deliver_later rescue nil
           end
+          TelegramNotifyJob.perform_later(booking.id, "new_booking") rescue nil
           Result.new(booking: booking, success?: true, error: nil)
         else
           Result.new(booking: booking, success?: false, error: booking.errors.full_messages.join(", "))

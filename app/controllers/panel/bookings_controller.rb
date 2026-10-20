@@ -11,12 +11,14 @@ class Panel::BookingsController < Panel::BaseController
   def confirm
     transition_booking(:confirm!, "Randevu onaylandı.") do
       BookingMailer.booking_confirmed(@booking).deliver_later rescue nil
+      TelegramNotifyJob.perform_later(@booking.id, "confirmed") rescue nil
     end
   end
 
   def decline
     transition_booking(:decline!, "Randevu reddedildi.") do
       BookingMailer.booking_declined(@booking).deliver_later rescue nil
+      TelegramNotifyJob.perform_later(@booking.id, "declined") rescue nil
     end
   end
 

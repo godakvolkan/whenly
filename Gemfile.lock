@@ -107,10 +107,40 @@ GEM
       irb (~> 1.10)
       reline (>= 0.3.8)
     drb (2.2.3)
+    dry-core (1.2.0)
+      concurrent-ruby (~> 1.0)
+      logger
+      zeitwerk (~> 2.6)
+    dry-inflector (1.3.1)
+    dry-logic (1.6.0)
+      bigdecimal
+      concurrent-ruby (~> 1.0)
+      dry-core (~> 1.1)
+      zeitwerk (~> 2.6)
+    dry-struct (1.8.1)
+      dry-core (~> 1.1)
+      dry-types (~> 1.8, >= 1.8.2)
+      ice_nine (~> 0.11)
+      zeitwerk (~> 2.6)
+    dry-types (1.9.1)
+      bigdecimal (>= 3.0)
+      concurrent-ruby (~> 1.0)
+      dry-core (~> 1.0)
+      dry-inflector (~> 1.0)
+      dry-logic (~> 1.4)
+      zeitwerk (~> 2.6)
     erb (6.0.7)
     erubi (1.13.1)
     et-orbi (1.4.2)
       tzinfo
+    faraday (2.15.0)
+      faraday-net_http (>= 2.0, < 3.6)
+      json
+      logger
+    faraday-multipart (1.2.0)
+      multipart-post (~> 2.0)
+    faraday-net_http (3.5.0)
+      net-http (~> 0.5)
     ffi (1.17.4-x64-mingw-ucrt)
     ffi (1.17.4-x86_64-linux-gnu)
     fugit (1.14.0)
@@ -120,6 +150,7 @@ GEM
       activesupport (>= 6.1)
     i18n (1.15.2)
       concurrent-ruby (~> 1.0)
+    ice_nine (0.11.2)
     image_processing (1.14.0)
       mini_magick (>= 4.9.5, < 6)
       ruby-vips (>= 2.0.17, < 3)
@@ -158,6 +189,10 @@ GEM
       drb (~> 2.0)
       prism (~> 1.5)
     msgpack (1.8.5)
+    multipart-post (2.4.1)
+    net-http (0.10.0)
+      net-protocol (>= 0.3.0)
+      uri (>= 0.11.1)
     net-imap (0.6.8)
       date
       net-protocol
@@ -300,6 +335,11 @@ GEM
       thor (>= 1.3.1)
     stimulus-rails (1.3.4)
       railties (>= 6.0.0)
+    telegram-bot-ruby (2.8.1)
+      dry-struct (~> 1.6)
+      faraday (~> 2.0)
+      faraday-multipart (~> 1.0)
+      zeitwerk (~> 2.6)
     thor (1.5.0)
     thruster (0.1.27)
     thruster (0.1.27-x86_64-linux)
@@ -354,6 +394,7 @@ DEPENDENCIES
   solid_cache
   solid_queue
   stimulus-rails
+  telegram-bot-ruby (~> 2.0)
   thruster
   turbo-rails
   tzinfo-data
@@ -390,14 +431,23 @@ CHECKSUMS
   date (3.6.0) sha256=18ac945c4e24ebd93534f8eab8c2fd8c5604b3e977105b3798d62a1e8d27b580
   debug (1.11.1) sha256=2e0b0ac6119f2207a6f8ac7d4a73ca8eb4e440f64da0a3136c30343146e952b6
   drb (2.2.3) sha256=0b00d6fdb50995fe4a45dea13663493c841112e4068656854646f418fda13373
+  dry-core (1.2.0) sha256=0cc5a7da88df397f153947eeeae42e876e999c1e30900f3c536fb173854e96a1
+  dry-inflector (1.3.1) sha256=7fb0c2bb04f67638f25c52e7ba39ab435d922a3a5c3cd196120f63accb682dcc
+  dry-logic (1.6.0) sha256=da6fedbc0f90fc41f9b0cc7e6f05f5d529d1efaef6c8dcc8e0733f685745cea2
+  dry-struct (1.8.1) sha256=033868594c45241540172bf1ebbc8bb76b72b4f0717072325deba38ac13e80f1
+  dry-types (1.9.1) sha256=baebeecdb9f8395d6c9d227b62011279440943e3ef2468fe8ccc1ba11467f178
   erb (6.0.7) sha256=c5ca6dc25b0ef974a44dc8f59fe847577122483b1968a38dec305c60bf91ee92
   erubi (1.13.1) sha256=a082103b0885dbc5ecf1172fede897f9ebdb745a4b97a5e8dc63953db1ee4ad9
   et-orbi (1.4.2) sha256=bb555dae668419cb24caa2a293a170e58be6d4df1e017c51f5030bdc133cd20c
+  faraday (2.15.0) sha256=3be0eff0187ed913a1b4f679e9fcfe845b542cdd4f75b76cd6181a4ae1335fff
+  faraday-multipart (1.2.0) sha256=7d89a949693714176f612323ca13746a2ded204031a6ba528adee788694ef757
+  faraday-net_http (3.5.0) sha256=2e7094c34e38754ee048cc3df47376f8657005d9375f8473bce1c3b526a22e36
   ffi (1.17.4-x64-mingw-ucrt) sha256=f6ff9618cfccc494138bddade27aa06c74c6c7bc367a1ea1103d80c2fcb9ed35
   ffi (1.17.4-x86_64-linux-gnu) sha256=9d3db14c2eae074b382fa9c083fe95aec6e0a1451da249eab096c34002bc752d
   fugit (1.14.0) sha256=e311a9cc85a54bb67649df45060e721282a1e2c8ebad40e41874a3a7d576f37e
   globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
   i18n (1.15.2) sha256=00f9eb62412fe593b2a65a97daa75300d37abb8f7202ec748e94b6d46a9dd1b5
+  ice_nine (0.11.2) sha256=5d506a7d2723d5592dc121b9928e4931742730131f22a1a37649df1c1e2e63db
   image_processing (1.14.0) sha256=754cc169c9c262980889bec6bfd325ed1dafad34f85242b5a07b60af004742fb
   importmap-rails (2.2.3) sha256=7101be2a4dc97cf1558fb8f573a718404c5f6bcfe94f304bf1f39e444feeb16a
   io-console (0.9.4) sha256=a403304f32928ee85e56d457b4612ca43f2703b561a3258844992bd24085fbb1
@@ -415,6 +465,8 @@ CHECKSUMS
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   minitest (6.0.6) sha256=153ea36d1d987a62942382b61075745042a2b3123b1cd48f4c3675af9cc7d6f1
   msgpack (1.8.5) sha256=97419eaa7b35dfe3e462c0e6c1a3dfdcbfc8756605c09e46e4c6daef127517ba
+  multipart-post (2.4.1) sha256=9872d03a8e552020ca096adadbf5e3cb1cd1cdd6acd3c161136b8a5737cdb4a8
+  net-http (0.10.0) sha256=1a2ff6e37a05724973c43f2bf7bf105f59c36a4cd0a7e9b1c021a0a566987c27
   net-imap (0.6.8) sha256=eb30bb62227b64a3af6b518b04b2375113d69f68f15de59b0193b07d98acf6d9
   net-pop (0.1.2) sha256=848b4e982013c15b2f0382792268763b748cce91c9e91e36b0f27ed26420dff3
   net-protocol (0.4.0) sha256=f9f90c8c6f64794a45160bf422177a336db12809de3beeeaa26b88fcd2e8c853
@@ -462,6 +514,7 @@ CHECKSUMS
   solid_cache (1.0.10) sha256=bc05a2fb3ac78a6f43cbb5946679cf9db67dd30d22939ededc385cb93e120d41
   solid_queue (1.7.0) sha256=6566b70b801d1c317c81bba7bcdd5677c019afac584a30374b4164002ca356d3
   stimulus-rails (1.3.4) sha256=765676ffa1f33af64ce026d26b48e8ffb2e0b94e0f50e9119e11d6107d67cb06
+  telegram-bot-ruby (2.8.1) sha256=7a7b0988c03988770657c52c3f55be4fe67926e7c72ebfa5d47ff621426a42a8
   thor (1.5.0) sha256=e3a9e55fe857e44859ce104a84675ab6e8cd59c650a49106a05f55f136425e73
   thruster (0.1.27) sha256=5fd3855192bb4e8d13db69ae5f70d39f2dfd88fe0394fa372104996edf0bb599
   thruster (0.1.27-x86_64-linux) sha256=7e0e6381011401810b047ff25506e0e38755b2430499ff5586f1a110086981c6

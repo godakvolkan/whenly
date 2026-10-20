@@ -16,7 +16,7 @@ class AvailabilityRule < ApplicationRecord
     7 => "Pazar"
   }.freeze
 
-  def day_name
+  def day_name 
     DAY_NAMES[day_of_week]
   end
 
