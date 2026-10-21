@@ -21,9 +21,10 @@ Whenly, ev sahibinin gelen randevu taleplerini onaylayıp reddedebildiği, süre
 3. [Faz 2: Maliyet Tahmini](#faz-2-maliyet-tahmini)
 4. [Kullanıcı Problemi ve Çözüm](#kullanıcı-problemi-ve-çözüm)
 5. [Uygulama Mimarisi](#uygulama-mimarisi)
-6. [Testler](#testler)
-7. [Yapamadıklarım](#yapamadıklarım)
-8. [Kurulum ve Çalıştırma](#kurulum-ve-çalıştırma)
+6. [Telegram Bot Entegrasyonu](#telegram-bot-entegrasyonu)
+7. [Testler](#testler)
+8. [Yapamadıklarım](#yapamadıklarım)
+9. [Kurulum ve Çalıştırma](#kurulum-ve-çalıştırma)
 
 ---
 
@@ -157,6 +158,7 @@ Calendly'de bugün e-posta doğrulaması, reCAPTCHA v3, kişiyi elle engelleme, 
 | Arayüz | Hotwire (Turbo Drive, Stimulus), Propshaft, importmap |
 | Kimlik doğrulama | Rails 8 `authentication` üreticisi |
 | Arka plan işleri | Solid Queue (`ExpirePendingBookingsJob`, `config/recurring.yml`) |
+| Telegram Bot | `telegram-bot-ruby` ~> 2.0, polling + webhook desteği |
 | Saat dilimi | Uygulama: Europe/Istanbul, veritabanı: UTC |
 | Yayın ortamı | Render (web servisi + PostgreSQL, ücretsiz plan) |
 
@@ -168,6 +170,7 @@ Calendly'de bugün e-posta doğrulaması, reCAPTCHA v3, kişiyi elle engelleme, 
 | `EventType` | Randevu türü: süre, onay gerekip gerekmediği, onay penceresi (saat). |
 | `AvailabilityRule` | Haftanın her günü için çalışma saatleri. |
 | `Booking` | Randevu talebi: davetli bilgileri, başlangıç ve bitiş zamanı, durum, onay son tarihi, durum takip bağlantısı (`token`). |
+| `TelegramSession` | Telegram bot konuşma durumu: `chat_id`, `state` (idle → select_host → ... → enter_email), `data` (JSONB). |
 
 Aynı ev sahibine aynı başlangıç saatinde iki aktif randevu oluşması, `bookings` tablosundaki kısmi tekil indeks (`[user_id, starts_at]`, yalnızca `pending` ve `confirmed` durumları için) ile veritabanı düzeyinde engellenir.
 
@@ -202,6 +205,57 @@ Bulut platformlarının ücretsiz veya başlangıç planlarında uygulama trafik
 ### İş mantığının konumu
 
 Rezervasyon oluşturma kuralları model geri çağrılarında (callback) değil, [`app/models/bookings/create.rb`](app/models/bookings/create.rb) servis nesnesinde yer alır. Modellerdeki geri çağrılar yalnızca `token` ve `slug` üretimiyle sınırlıdır.
+
+---
+
+## Telegram Bot Entegrasyonu
+
+Whenly, web arayüzüne ek olarak Telegram bot ön yüzü sunar. Davetliler Telegram üzerinden doğal dille randevu sorgulayabilir ve oluşturabilir; ev sahipleri bildirimleri Telegram'dan alır ve inline butonlarla onay/red işlemi yapar.
+
+**Telegram Bot:** [@whenly_slot_bot](https://t.me/whenly_slot_bot)
+
+### Özellikler
+
+| Özellik | Açıklama |
+| :--- | :--- |
+| Doğal dille boş saat sorma | "Mentorluk için yer var mı?" gibi mesajlar algılanır, müsait saatler listelenir |
+| İki taraflı onay | Davetli randevu oluşturur → ev sahibine bildirim + ✅ Onayla / ❌ Reddet butonları → davetliye sonuç bildirimi |
+| 1 saat önceden hatırlatma | Onaylanan randevudan 1 saat önce hem ev sahibine hem davetliye Telegram hatırlatması |
+| Link / adres gönderme | Randevu onaylandığında ve hatırlatmada toplantı linki veya fiziksel adres bilgisi gönderilir |
+| Müsaitlik kontrolü | Sadece `AvailabilityRule`'da tanımlı günler ve `SlotFinder`'da müsait slotlar gösterilir |
+| Hesap bağlama | Ev sahibi `/bagla email` komutuyla Telegram hesabını bağlar, anlık bildirim almaya başlar |
+| E-posta entegrasyonu | Telegram'dan onay/red yapıldığında davetliye e-posta da gönderilir |
+
+### Komutlar
+
+| Komut | Açıklama |
+| :--- | :--- |
+| `/start` | Hoş geldin mesajı ve komut listesi |
+| `/randevu` | Yeni randevu oluşturma akışı (ev sahibi → tür → gün → saat → ad → e-posta) |
+| `/bagla email` | Ev sahibi hesabını Telegram'a bağlama (bildirim almak için) |
+| `/randevularim` | Bekleyen ve yaklaşan randevuları görme + onay/red butonları |
+| `/iptal` | Mevcut işlemi iptal etme |
+
+### Mimari
+
+| Bileşen | Dosya | Görevi |
+| :--- | :--- | :--- |
+| Bot Servisi | `app/services/telegram_bot_service.rb` | Konuşma akışı, doğal dil, bildirimler, onay/red |
+| Webhook Controller | `app/controllers/telegram_webhook_controller.rb` | `POST /telegram/webhook` endpoint |
+| Bildirim Job | `app/jobs/telegram_notify_job.rb` | Asenkron randevu bildirimi (yeni, onay, red) |
+| Hatırlatma Job | `app/jobs/telegram_reminder_job.rb` | 1 saat önceden hatırlatma |
+| Oturum Modeli | `app/models/telegram_session.rb` | Konuşma durumu takibi (state machine) |
+| Polling Task | `lib/tasks/telegram.rake` | `rake telegram:bot` ile polling modu |
+
+### Çalıştırma
+
+```bash
+# Polling modu (geliştirme)
+TELEGRAM_BOT_TOKEN=xxx rake telegram:bot
+
+# Webhook modu (üretim - Render)
+rake telegram:set_webhook[https://whenly-cpyy.onrender.com/telegram/webhook]
+```
 
 ---
 
@@ -262,6 +316,7 @@ bin/rails server
 | Yönetici e-postası | `godakvolkan@gmail.com` |
 | Şifre | `password123` |
 | Davetli rezervasyon sayfası | https://whenly-cpyy.onrender.com/volkan/mentorluk |
-| Onay bekleyen davetli (SMTP testi) | `volkangodak@gmail.com` (canlı test için) |
+| Telegram Bot | [@whenly_slot_bot](https://t.me/whenly_slot_bot) |
+| Onay bekleyen davetli (SMTP testi) | `volkangodkan@gmail.com` (canlı test için) |
 | 2 kez gelmeyen kronik no-show davetlisi | `bayulgen5546@gmail.com` (`seeds.rb` ile geçmişe eklenen 2 onaylı randevusu panelde No-Show işaretlenmeye hazır) |
 
