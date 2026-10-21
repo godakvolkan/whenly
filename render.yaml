@@ -19,3 +19,11 @@ services:
       # Mevcut ücretsiz veritabanının (whenly-db) Internal Database URL'i elle girilir.
       - key: DATABASE_URL
         sync: false
+      - key: APP_HOST
+        value: whenly-cpyy.onrender.com
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
