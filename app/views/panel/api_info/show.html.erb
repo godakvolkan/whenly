@@ -1,0 +1,68 @@
+<div style="max-width: 800px;">
+  <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">REST API</h1>
+  <p style="font-size: 14px; color: var(--color-text-secondary); margin-bottom: 28px;">
+    Dış uygulamalar ile entegrasyon yapmak için REST API'yi kullanın.
+  </p>
+
+  <div class="card" style="margin-bottom: 24px;">
+    <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">API Anahtarınız</h3>
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+      <code style="background: var(--color-bg); padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; flex: 1; word-break: break-all; border: 1px solid var(--color-border);">
+        <%= @api_token %>
+      </code>
+    </div>
+    <%= button_to "Yeni Anahtar Oluştur", panel_regenerate_api_token_path, method: :patch, class: "btn btn-sm btn-outline", data: { turbo_confirm: "Mevcut anahtar geçersiz olacak. Emin misiniz?" } %>
+  </div>
+
+  <div class="card" style="margin-bottom: 24px;">
+    <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">Endpoint'ler</h3>
+    <div style="font-size: 14px; line-height: 2;">
+      <div style="display: flex; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-border);">
+        <span class="badge badge-confirmed" style="font-size: 11px; min-width: 50px; justify-content: center;">GET</span>
+        <code style="font-size: 13px;">/api/v1/bookings</code>
+        <span style="color: var(--color-text-secondary); font-size: 13px;">— Tüm randevuları listele</span>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-border);">
+        <span class="badge badge-confirmed" style="font-size: 11px; min-width: 50px; justify-content: center;">GET</span>
+        <code style="font-size: 13px;">/api/v1/bookings/:id</code>
+        <span style="color: var(--color-text-secondary); font-size: 13px;">— Randevu detayı</span>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-border);">
+        <span class="badge badge-pending" style="font-size: 11px; min-width: 50px; justify-content: center;">POST</span>
+        <code style="font-size: 13px;">/api/v1/bookings</code>
+        <span style="color: var(--color-text-secondary); font-size: 13px;">— Yeni randevu oluştur</span>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-border);">
+        <span class="badge badge-pending" style="font-size: 11px; min-width: 50px; justify-content: center;">PATCH</span>
+        <code style="font-size: 13px;">/api/v1/bookings/:id/confirm</code>
+        <span style="color: var(--color-text-secondary); font-size: 13px;">— Randevuyu onayla</span>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-border);">
+        <span class="badge badge-pending" style="font-size: 11px; min-width: 50px; justify-content: center;">PATCH</span>
+        <code style="font-size: 13px;">/api/v1/bookings/:id/decline</code>
+        <span style="color: var(--color-text-secondary); font-size: 13px;">— Randevuyu reddet</span>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-border);">
+        <span class="badge badge-confirmed" style="font-size: 11px; min-width: 50px; justify-content: center;">GET</span>
+        <code style="font-size: 13px;">/api/v1/bookings/:id/ics</code>
+        <span style="color: var(--color-text-secondary); font-size: 13px;">— .ics takvim dosyası indir</span>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-border);">
+        <span class="badge badge-confirmed" style="font-size: 11px; min-width: 50px; justify-content: center;">GET</span>
+        <code style="font-size: 13px;">/api/v1/event_types</code>
+        <span style="color: var(--color-text-secondary); font-size: 13px;">— Randevu türlerini listele</span>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center; padding: 8px 0;">
+        <span class="badge badge-confirmed" style="font-size: 11px; min-width: 50px; justify-content: center;">GET</span>
+        <code style="font-size: 13px;">/api/v1/event_types/:id/available_slots?date=YYYY-MM-DD</code>
+        <span style="color: var(--color-text-secondary); font-size: 13px;">— Müsait saatler</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Kullanım Örneği</h3>
+    <pre style="background: #1E293B; color: #E2E8F0; padding: 16px; border-radius: var(--radius-sm); font-size: 13px; overflow-x: auto; line-height: 1.6;"><code>curl -H "Authorization: Bearer <%= @api_token %>" \
+     <%= request.base_url %>/api/v1/bookings</code></pre>
+  </div>
+</div>

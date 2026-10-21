@@ -22,9 +22,14 @@ Whenly, ev sahibinin gelen randevu taleplerini onaylayıp reddedebildiği, süre
 4. [Kullanıcı Problemi ve Çözüm](#kullanıcı-problemi-ve-çözüm)
 5. [Uygulama Mimarisi](#uygulama-mimarisi)
 6. [Telegram Bot Entegrasyonu](#telegram-bot-entegrasyonu)
-7. [Testler](#testler)
-8. [Yapamadıklarım](#yapamadıklarım)
-9. [Kurulum ve Çalıştırma](#kurulum-ve-çalıştırma)
+7. [REST API](#rest-api)
+8. [Gerçek Zamanlı Güncellemeler](#gerçek-zamanlı-güncellemeler)
+9. [İstatistik Paneli](#i̇statistik-paneli)
+10. [Takvim Dosyası (.ics)](#takvim-dosyası-ics)
+11. [Çoklu Dil Desteği](#çoklu-dil-desteği)
+12. [Testler](#testler)
+13. [Yapamadıklarım](#yapamadıklarım)
+14. [Kurulum ve Çalıştırma](#kurulum-ve-çalıştırma)
 
 ---
 
@@ -155,10 +160,14 @@ Calendly'de bugün e-posta doğrulaması, reCAPTCHA v3, kişiyi elle engelleme, 
 | :--- | :--- |
 | Çatı | Ruby on Rails 8.1.4 |
 | Veritabanı | PostgreSQL |
-| Arayüz | Hotwire (Turbo Drive, Stimulus), Propshaft, importmap |
+| Arayüz | Hotwire (Turbo Drive + Turbo Streams, Stimulus), Propshaft, importmap |
+| Gerçek zamanlı | ActionCable (WebSocket) + Turbo Streams, `BookingsChannel` |
 | Kimlik doğrulama | Rails 8 `authentication` üreticisi |
 | Arka plan işleri | Solid Queue (`ExpirePendingBookingsJob`, `config/recurring.yml`) |
-| Telegram Bot | `telegram-bot-ruby` ~> 2.0, polling + webhook desteği |
+| Telegram Bot | `telegram-bot-ruby` ~> 2.0, polling + webhook desteği, çoklu dil (TR/EN) |
+| REST API | JSON API (Bearer token), `/api/v1/` namespace |
+| Grafikler | Chart.js 4.4.4 (CDN, importmap) |
+| Takvim dosyası | ICS generator (`IcsGenerator`) — Telegram + web indirme |
 | Saat dilimi | Uygulama: Europe/Istanbul, veritabanı: UTC |
 | Yayın ortamı | Render (web servisi + PostgreSQL, ücretsiz plan) |
 
@@ -234,6 +243,7 @@ Whenly, web arayüzüne ek olarak Telegram bot ön yüzü sunar. Davetliler Tele
 | `/randevu` | Yeni randevu oluşturma akışı (ev sahibi → tür → gün → saat → ad → e-posta) |
 | `/bagla email` | Ev sahibi hesabını Telegram'a bağlama (bildirim almak için) |
 | `/randevularim` | Bekleyen ve yaklaşan randevuları görme + onay/red butonları |
+| `/lang en` veya `/lang tr` | Bot dilini değiştirme (Türkçe / İngilizce) |
 | `/iptal` | Mevcut işlemi iptal etme |
 
 ### Mimari
@@ -245,6 +255,7 @@ Whenly, web arayüzüne ek olarak Telegram bot ön yüzü sunar. Davetliler Tele
 | Bildirim Job | `app/jobs/telegram_notify_job.rb` | Asenkron randevu bildirimi (yeni, onay, red) |
 | Hatırlatma Job | `app/jobs/telegram_reminder_job.rb` | 1 saat önceden hatırlatma |
 | Oturum Modeli | `app/models/telegram_session.rb` | Konuşma durumu takibi (state machine) |
+| ICS Generator | `app/services/ics_generator.rb` | .ics takvim dosyası oluşturma |
 | Polling Task | `lib/tasks/telegram.rake` | `rake telegram:bot` ile polling modu |
 
 ### Çalıştırma
@@ -256,6 +267,82 @@ TELEGRAM_BOT_TOKEN=xxx rake telegram:bot
 # Webhook modu (üretim - Render)
 rake telegram:set_webhook[https://whenly-cpyy.onrender.com/telegram/webhook]
 ```
+
+---
+
+## REST API
+
+Whenly, dış uygulamalarla entegrasyon için JSON tabanlı REST API sunar. Kimlik doğrulaması Bearer token ile yapılır.
+
+**Base URL:** `https://whenly-cpyy.onrender.com/api/v1`
+
+### Endpoint'ler
+
+| Metot | Endpoint | Açıklama |
+| :--- | :--- | :--- |
+| `GET` | `/bookings` | Tüm randevuları listele (`?status=pending` filtre destekler) |
+| `GET` | `/bookings/:id` | Randevu detayı |
+| `POST` | `/bookings` | Yeni randevu oluştur (`event_type_id`, `invitee_name`, `invitee_email`, `starts_at`) |
+| `PATCH` | `/bookings/:id/confirm` | Randevuyu onayla |
+| `PATCH` | `/bookings/:id/decline` | Randevuyu reddet |
+| `PATCH` | `/bookings/:id/cancel` | Randevuyu iptal et |
+| `GET` | `/bookings/:id/ics` | .ics takvim dosyası indir |
+| `GET` | `/event_types` | Randevu türlerini listele |
+| `GET` | `/event_types/:id` | Randevu türü detayı |
+| `GET` | `/event_types/:id/available_slots?date=YYYY-MM-DD` | Belirli bir gündeki müsait saatleri listele |
+
+### Kullanım
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_TOKEN" \
+     https://whenly-cpyy.onrender.com/api/v1/bookings
+```
+
+API anahtarı paneldeki **API** sayfasından alınabilir.
+
+---
+
+## Gerçek Zamanlı Güncellemeler
+
+Dashboard, ActionCable (WebSocket) üzerinden gerçek zamanlı güncellenir. Bir randevu oluşturulduğunda, onaylandığında veya reddedildiğinde panel otomatik olarak yenilenir.
+
+| Bileşen | Dosya | Görevi |
+| :--- | :--- | :--- |
+| ActionCable Channel | `app/channels/bookings_channel.rb` | Ev sahibine özel WebSocket kanalı |
+| JS Consumer | `app/javascript/channels/index.js` | `BookingsChannel` aboneliği |
+| Stimulus Controller | `app/javascript/controllers/dashboard_controller.js` | Canlı gösterge animasyonu + otomatik yenileme |
+| Model Broadcast | `app/models/booking.rb` (`after_commit`) | Her durum değişikliğinde broadcast |
+
+Dashboard'da yeşil "CANLI" göstergesi WebSocket bağlantısının aktif olduğunu gösterir.
+
+---
+
+## İstatistik Paneli
+
+Dashboard'a eklenen İstatistikler sekmesi, Chart.js ile görselleştirilmiş randevu analitiği sunar:
+
+- **Durum dağılımı** (doughnut chart): Onaylı, bekleyen, tamamlanan, no-show, reddedilen, iptal, süresi dolmuş
+- **Son 30 gün** (bar chart): Günlük randevu sayıları
+- **En yoğun günler** (bar chart): Haftanın hangi günü en çok randevu alınıyor
+- **Saatlere göre dağılım** (line chart): Hangi saatler en popüler
+
+Özet kartları: Toplam randevu, bekleyen, onaylı/tamamlanan, no-show oranı (%).
+
+---
+
+## Takvim Dosyası (.ics)
+
+Randevu onaylandığında davetliye `.ics` takvim dosyası gönderilir:
+
+- **Telegram:** Onay sonrası bot otomatik olarak .ics dosyasını gönderir (Google Calendar / Outlook'a eklenebilir)
+- **Web:** Davetli durum sayfasında (`/b/:token`) "Takvime Ekle" butonu ile indirilebilir
+- **API:** `GET /api/v1/bookings/:id/ics` endpoint'i ile alınabilir
+
+---
+
+## Çoklu Dil Desteği
+
+Telegram botu Türkçe ve İngilizce dillerini destekler. Kullanıcı `/lang en` veya `/lang tr` komutuyla dil değiştirebilir. Dil tercihi oturum boyunca saklanır.
 
 ---
 
@@ -289,7 +376,7 @@ Yerel çalıştırma: `bin/rails test`
 
 ## Yapamadıklarım
 
-1. **Google Takvim (OAuth 2.0) iki yönlü senkronizasyonu yok.** Randevular Whenly veritabanında yönetilir, onay/durum e-postaları ActionMailer (Gmail SMTP) ile iletilir ve durum takibi `/b/:token` ekranından yapılır; doğrudan Google Calendar API senkronizasyonu dahil edilmemiştir.
+1. **Google Takvim (OAuth 2.0) iki yönlü senkronizasyonu yok.** .ics dosyası desteği eklenmiştir ancak doğrudan Google Calendar API senkronizasyonu dahil edilmemiştir.
 2. **Herkese açık yeni ev sahibi kaydı ekranı yok.** Uygulama kurumsal demo odaklıdır; ev sahibi hesabı `db/seeds.rb` ile oluşturulan yönetici hesabı (`godakvolkan@gmail.com`) ile çalışır.
 3. **Arka plan işinin yayın ortamında çalışması:** Süre kontrolü okuma anında yapıldığından iş akışının doğruluğu arka plan işine bağlı değildir.
 

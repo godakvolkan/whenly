@@ -2,6 +2,8 @@ class Booking < ApplicationRecord
   belongs_to :user
   belongs_to :event_type
 
+  after_commit :broadcast_update
+
   STATUSES = %w[pending confirmed declined canceled completed no_show expired].freeze
 
   TRANSITIONS = {
@@ -66,5 +68,14 @@ class Booking < ApplicationRecord
 
   def set_token
     self.token ||= SecureRandom.urlsafe_base64(16)
+  end
+
+  def broadcast_update
+    BookingsChannel.broadcast_to(user, {
+      type: "booking_update",
+      booking_id: id,
+      status: status,
+      invitee_name: invitee_name
+    })
   end
 end

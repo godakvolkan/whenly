@@ -1,4 +1,63 @@
 class TelegramBotService
+  LANGS = {
+    "tr" => {
+      welcome: "👋 *Whenly Randevu Sistemine Hoş Geldiniz!*\n\nBu bot ile kolayca randevu alabilirsiniz.\n\n📌 *Komutlar:*\n/randevu — Yeni randevu al\n/bagla — Ev sahibi hesabınızı bağlayın\n/randevularim — Bekleyen randevularınızı görün\n/lang — Dil değiştir (TR/EN)\n/iptal — Mevcut işlemi iptal et",
+      cancel: "İşlem iptal edildi.",
+      enter_name: "👤 *Adınızı ve soyadınızı yazın:*",
+      enter_email: "📧 *E-posta adresinizi yazın:*",
+      invalid_name: "Lütfen geçerli bir ad girin.",
+      invalid_email: "Lütfen geçerli bir e-posta adresi girin.",
+      no_host: "Şu anda kayıtlı ev sahibi bulunmuyor.",
+      select_host: "👤 *Kimin için randevu almak istiyorsunuz?*",
+      select_event: "📋 *%{name}* için hangi randevu türü?\n",
+      no_event_types: "Bu ev sahibinin randevu türü bulunmuyor.",
+      select_date: "📅 *Hangi gün için randevu almak istersiniz?*",
+      no_days: "😔 Önümüzdeki 2 hafta içinde müsait gün bulunmuyor.",
+      no_slots: "😔 Bu tarihte müsait saat bulunmuyor. Başka bir gün seçin.",
+      available_slots: "🕐 *%{date} tarihinde müsait saatler:*\n%{name} (%{dur} dk)",
+      booking_created: "🎉 *Randevunuz oluşturuldu!*",
+      approved: "✅ *Randevu Onaylandı*",
+      declined: "❌ *Randevu Reddedildi*",
+      no_pending: "📭 Bekleyen veya yaklaşan randevunuz bulunmuyor.",
+      not_linked: "Hesabınız bağlı değil. Önce /bagla komutu ile bağlayın.",
+      linked: "✅ *Hesap bağlandı!*\n\nMerhaba %{name}! Artık yeni randevu talepleri ve hatırlatmalar Telegram'dan gelecek.",
+      not_found: "Bu e-posta ile kayıtlı bir hesap bulunamadı.",
+      unauthorized: "Bu işlem için yetkiniz yok.",
+      lang_changed: "Dil Türkçe olarak ayarlandı.",
+      status_pending: "⏳ Onay Bekliyor",
+      status_confirmed: "✅ Onaylandı",
+      today: "Bugün"
+    },
+    "en" => {
+      welcome: "👋 *Welcome to Whenly Booking System!*\n\nBook appointments easily with this bot.\n\n📌 *Commands:*\n/randevu — Book an appointment\n/bagla — Link your host account\n/randevularim — View pending bookings\n/lang — Change language (TR/EN)\n/iptal — Cancel current operation",
+      cancel: "Operation cancelled.",
+      enter_name: "👤 *Enter your full name:*",
+      enter_email: "📧 *Enter your email address:*",
+      invalid_name: "Please enter a valid name.",
+      invalid_email: "Please enter a valid email address.",
+      no_host: "No registered hosts available.",
+      select_host: "👤 *Who would you like to book with?*",
+      select_event: "📋 Which appointment type for *%{name}*?\n",
+      no_event_types: "This host has no appointment types.",
+      select_date: "📅 *Which day would you like to book?*",
+      no_days: "😔 No available days in the next 2 weeks.",
+      no_slots: "😔 No available slots on this date. Try another day.",
+      available_slots: "🕐 *Available slots on %{date}:*\n%{name} (%{dur} min)",
+      booking_created: "🎉 *Your appointment has been created!*",
+      approved: "✅ *Appointment Confirmed*",
+      declined: "❌ *Appointment Declined*",
+      no_pending: "📭 No pending or upcoming appointments.",
+      not_linked: "Your account is not linked. Use /bagla first.",
+      linked: "✅ *Account linked!*\n\nHello %{name}! You will now receive booking notifications via Telegram.",
+      not_found: "No account found with this email.",
+      unauthorized: "You are not authorized for this action.",
+      lang_changed: "Language set to English.",
+      status_pending: "⏳ Pending Approval",
+      status_confirmed: "✅ Confirmed",
+      today: "Today"
+    }
+  }.freeze
+
   attr_reader :bot
 
   def initialize(bot = nil)
@@ -21,9 +80,11 @@ class TelegramBotService
       connect_host_account(chat_id, $1.strip, session)
     when "/randevularim"
       show_host_bookings(chat_id)
+    when "/lang", "/lang tr", "/lang en"
+      switch_language(chat_id, text, session)
     when "/iptal"
       session.reset!
-      send_text(chat_id, "İşlem iptal edildi.")
+      send_text(chat_id, t(session, :cancel))
     else
       handle_state_input(chat_id, text, session)
     end
@@ -126,23 +187,29 @@ class TelegramBotService
     ENV.fetch("TELEGRAM_BOT_TOKEN")
   end
 
+  def t(session, key, **vars)
+    lang = session.respond_to?(:get) ? (session.get("lang") || "tr") : "tr"
+    text = LANGS.dig(lang, key) || LANGS.dig("tr", key) || key.to_s
+    vars.each { |k, v| text = text.gsub("%{#{k}}", v.to_s) }
+    text
+  end
+
+  def switch_language(chat_id, text, session)
+    lang = text.strip.split.last
+    lang = lang == "en" ? "en" : "tr"
+    session.set(:lang, lang)
+    send_text(chat_id, t(session, :lang_changed), parse_mode: "Markdown")
+  end
+
   def send_welcome(chat_id, session)
     session.reset!
-    send_text(chat_id,
-      "👋 *Whenly Randevu Sistemine Hoş Geldiniz!*\n\n" \
-      "Bu bot ile kolayca randevu alabilirsiniz.\n\n" \
-      "📌 *Komutlar:*\n" \
-      "/randevu — Yeni randevu al\n" \
-      "/bagla — Ev sahibi hesabınızı bağlayın (bildirim almak için)\n" \
-      "/randevularim — Bekleyen randevularınızı görün\n" \
-      "/iptal — Mevcut işlemi iptal et",
-      parse_mode: "Markdown")
+    send_text(chat_id, t(session, :welcome), parse_mode: "Markdown")
   end
 
   def start_booking_flow(chat_id, session)
     hosts = User.all
     if hosts.empty?
-      send_text(chat_id, "Şu anda kayıtlı ev sahibi bulunmuyor.")
+      send_text(chat_id, t(session, :no_host))
       return
     end
 
@@ -155,7 +222,7 @@ class TelegramBotService
       [Telegram::Bot::Types::InlineKeyboardButton.new(text: h.name, callback_data: "host_#{h.id}")]
     end
     kb = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: buttons)
-    send_text(chat_id, "👤 *Kimin için randevu almak istiyorsunuz?*", parse_mode: "Markdown", reply_markup: kb)
+    send_text(chat_id, t(session, :select_host), parse_mode: "Markdown", reply_markup: kb)
     session.transition_to!("select_host")
   end
 
@@ -166,7 +233,7 @@ class TelegramBotService
     session.set(:host_id, host_id)
     event_types = user.event_types
     if event_types.empty?
-      send_text(chat_id, "Bu ev sahibinin randevu türü bulunmuyor.")
+      send_text(chat_id, t(session, :no_event_types))
       session.reset!
       return
     end
@@ -178,7 +245,7 @@ class TelegramBotService
       )]
     end
     kb = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: buttons)
-    send_text(chat_id, "📋 *#{user.name}* için hangi randevu türü?\n", parse_mode: "Markdown", reply_markup: kb)
+    send_text(chat_id, t(session, :select_event, name: user.name), parse_mode: "Markdown", reply_markup: kb)
     session.transition_to!("select_event_type")
   end
 
@@ -203,18 +270,18 @@ class TelegramBotService
       next unless available_days.include?(d.cwday)
       next if SlotFinder.new(host, et, d).available_slots.empty?
 
-      label = offset == 0 ? "Bugün (#{d.strftime('%d/%m')})" : "#{day_names[d.cwday]} #{d.strftime('%d/%m')}"
+      label = offset == 0 ? "#{t(session, :today)} (#{d.strftime('%d/%m')})" : "#{day_names[d.cwday]} #{d.strftime('%d/%m')}"
       [Telegram::Bot::Types::InlineKeyboardButton.new(text: label, callback_data: "date_#{d.iso8601}")]
     end
 
     if buttons.empty?
-      send_text(chat_id, "😔 Önümüzdeki 2 hafta içinde müsait gün bulunmuyor.")
+      send_text(chat_id, t(session, :no_days))
       session.reset!
       return
     end
 
     kb = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: buttons)
-    send_text(chat_id, "📅 *Hangi gün için randevu almak istersiniz?*", parse_mode: "Markdown", reply_markup: kb)
+    send_text(chat_id, t(session, :select_date), parse_mode: "Markdown", reply_markup: kb)
     session.transition_to!("select_date")
   end
 
@@ -227,7 +294,7 @@ class TelegramBotService
     slots = SlotFinder.new(host, et, date).available_slots
 
     if slots.empty?
-      send_text(chat_id, "😔 Bu tarihte müsait saat bulunmuyor. Başka bir gün seçin.")
+      send_text(chat_id, t(session, :no_slots))
       show_date_picker(chat_id, session)
       return
     end
@@ -238,15 +305,14 @@ class TelegramBotService
     end
     kb = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: buttons)
     send_text(chat_id,
-      "🕐 *#{date.strftime('%d.%m.%Y')} tarihinde müsait saatler:*\n" \
-      "#{et.name} (#{et.duration_minutes} dk)",
+      t(session, :available_slots, date: date.strftime('%d.%m.%Y'), name: et.name, dur: et.duration_minutes),
       parse_mode: "Markdown", reply_markup: kb)
     session.transition_to!("select_slot")
   end
 
   def select_slot(chat_id, starts_at_str, session)
     session.set(:starts_at, starts_at_str)
-    send_text(chat_id, "👤 *Adınızı ve soyadınızı yazın:*", parse_mode: "Markdown")
+    send_text(chat_id, t(session, :enter_name), parse_mode: "Markdown")
     session.transition_to!("enter_name")
   end
 
@@ -254,15 +320,15 @@ class TelegramBotService
     case session.state
     when "enter_name"
       if text.length < 2
-        send_text(chat_id, "Lütfen geçerli bir ad girin.")
+        send_text(chat_id, t(session, :invalid_name))
         return
       end
       session.set(:invitee_name, text)
-      send_text(chat_id, "📧 *E-posta adresinizi yazın:*", parse_mode: "Markdown")
+      send_text(chat_id, t(session, :enter_email), parse_mode: "Markdown")
       session.transition_to!("enter_email")
     when "enter_email"
       unless text.match?(URI::MailTo::EMAIL_REGEXP)
-        send_text(chat_id, "Lütfen geçerli bir e-posta adresi girin.")
+        send_text(chat_id, t(session, :invalid_email))
         return
       end
       session.set(:invitee_email, text)
@@ -324,7 +390,7 @@ class TelegramBotService
       invitee_email = session.get("invitee_email")
       no_show_forced = !et.requires_approval && booking.pending? && SchedulingRules.repeat_no_show?(host, invitee_email)
 
-      status_text = booking.pending? ? "⏳ Onay Bekliyor" : "✅ Onaylandı"
+      status_text = booking.pending? ? t(session, :status_pending) : t(session, :status_confirmed)
       reason = if no_show_forced
                  "⚠️ Daha önce 2 kez katılmadığınız tespit edildiğinden randevunuz ev sahibi onayına düşmüştür."
                elsif booking.pending?
@@ -336,7 +402,7 @@ class TelegramBotService
       loc_line = location.present? && booking.confirmed? ? "\n📍 *Konum:* #{location}" : ""
 
       send_text(chat_id,
-        "🎉 *Randevunuz oluşturuldu!*\n\n" \
+        "#{t(session, :booking_created)}\n\n" \
         "👤 *Ev Sahibi:* #{host.name}\n" \
         "📌 *Tür:* #{et.name}\n" \
         "📅 *Tarih:* #{booking.starts_at.in_time_zone('Istanbul').strftime('%d.%m.%Y')}\n" \
@@ -344,6 +410,8 @@ class TelegramBotService
         "📊 *Durum:* #{status_text}#{loc_line}\n\n" \
         "#{reason}",
         parse_mode: "Markdown")
+
+      send_ics_file(chat_id, booking) if booking.confirmed?
 
       TelegramNotifyJob.perform_later(booking.id, "new_booking")
       TelegramReminderJob.set(wait_until: booking.starts_at - 1.hour).perform_later(booking.id) if booking.starts_at > 1.hour.from_now
@@ -367,20 +435,17 @@ class TelegramBotService
     user = User.find_by(email_address: email.downcase)
     if user
       user.update!(telegram_chat_id: chat_id)
-      send_text(chat_id,
-        "✅ *Hesap bağlandı!*\n\n" \
-        "Merhaba #{user.name}! Artık yeni randevu talepleri ve hatırlatmalar Telegram'dan gelecek.\n\n" \
-        "/randevularim — Bekleyen randevuları gör",
-        parse_mode: "Markdown")
+      send_text(chat_id, t(session, :linked, name: user.name), parse_mode: "Markdown")
     else
-      send_text(chat_id, "❌ Bu e-posta ile kayıtlı bir hesap bulunamadı.")
+      send_text(chat_id, "❌ #{t(session, :not_found)}")
     end
   end
 
   def show_host_bookings(chat_id)
+    session = TelegramSession.for(chat_id)
     user = User.find_by(telegram_chat_id: chat_id)
     unless user
-      send_text(chat_id, "Hesabınız bağlı değil. Önce /bagla komutu ile bağlayın.")
+      send_text(chat_id, t(session, :not_linked))
       return
     end
 
@@ -440,6 +505,11 @@ class TelegramBotService
         "📌 #{booking.event_type.name}#{loc_line}",
         parse_mode: "Markdown")
       notify_invitee_status(booking, "✅ Onaylandı")
+
+      invitee_session = TelegramSession.find_by("data->>'booking_id' = ?", booking.id.to_s)
+      send_ics_file(invitee_session.chat_id, booking) if invitee_session
+      send_ics_file(chat_id, booking)
+
       TelegramReminderJob.set(wait_until: booking.starts_at - 1.hour).perform_later(booking.id) if booking.starts_at > 1.hour.from_now
     rescue Booking::InvalidTransition => e
       send_text(chat_id, "❌ #{e.message}")
@@ -485,6 +555,21 @@ class TelegramBotService
     bot.api.answer_callback_query(callback_query_id: callback_id)
   rescue => e
     puts "CALLBACK ERROR: #{e.class}: #{e.message}"
+  end
+
+  def send_ics_file(chat_id, booking)
+    ics = IcsGenerator.new(booking)
+    file = ics.to_file
+    bot.api.send_document(
+      chat_id: chat_id,
+      document: Faraday::UploadIO.new(file.path, "text/calendar", "randevu_#{booking.token}.ics"),
+      caption: "📅 Takvim dosyanız (.ics) — Google Calendar veya Outlook'a ekleyebilirsiniz."
+    )
+  rescue => e
+    puts "ICS SEND ERROR: #{e.class}: #{e.message}"
+  ensure
+    file&.close
+    file&.unlink
   end
 
   def retry_without_markdown(chat_id, text, opts)

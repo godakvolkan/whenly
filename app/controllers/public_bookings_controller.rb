@@ -37,6 +37,15 @@ class PublicBookingsController < ApplicationController
 
   def show
     @booking = Booking.find_by!(token: params[:token])
+
+    respond_to do |format|
+      format.html
+      format.ics do
+        send_data IcsGenerator.call(@booking),
+                  filename: "randevu_#{@booking.token}.ics",
+                  type: "text/calendar"
+      end
+    end
   end
 
   def cancel

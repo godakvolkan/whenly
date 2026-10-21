@@ -12,10 +12,19 @@ class User < ApplicationRecord
   validates :slug, presence: true, uniqueness: true, format: { with: /\A[a-z0-9\-]+\z/ }
 
   before_validation :generate_slug, on: :create
+  before_create :generate_api_token
+
+  def regenerate_api_token!
+    update!(api_token: SecureRandom.hex(32))
+  end
 
   private
 
   def generate_slug
     self.slug ||= name&.parameterize
+  end
+
+  def generate_api_token
+    self.api_token ||= SecureRandom.hex(32)
   end
 end

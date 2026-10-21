@@ -66,11 +66,35 @@
             <div class="form-label" style="margin-bottom: 2px;">Davetli</div>
             <div><%= @booking.invitee_name %> (<%= @booking.invitee_email %>)</div>
           </div>
+
+          <% if @booking.event_type.location.present? && @booking.confirmed? %>
+            <div>
+              <div class="form-label" style="margin-bottom: 2px;">Konum / Link</div>
+              <div style="font-weight: 600; color: var(--color-primary);">
+                <% if @booking.event_type.location.start_with?("http") %>
+                  <%= link_to @booking.event_type.location, @booking.event_type.location, target: "_blank" %>
+                <% else %>
+                  <%= @booking.event_type.location %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
         </div>
       </div>
 
+      <% if @booking.confirmed? %>
+        <div style="text-align: center; margin-top: 16px; margin-bottom: 12px;">
+          <%= link_to booking_ics_path(@booking.token), class: "btn btn-primary", style: "width: 100%;" do %>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            Takvime Ekle (.ics indir)
+          <% end %>
+        </div>
+      <% end %>
+
       <% if @booking.status.in?(%w[pending confirmed]) %>
-        <div style="text-align: center; margin-top: 16px;">
+        <div style="text-align: center; margin-top: 12px;">
           <%= button_to cancel_booking_path(@booking.token),
                         method: :patch,
                         class: "btn btn-outline btn-danger",
