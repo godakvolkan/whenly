@@ -185,15 +185,27 @@ class TelegramBotService
   end
 
   def show_date_picker(chat_id, session)
+    host = User.find(session.get("host_id"))
+    et = EventType.find(session.get("event_type_id"))
+    available_days = host.availability_rules.pluck(:day_of_week)
+
     today = Date.current
-    buttons = (0..6).map do |offset|
+    day_names = { 1 => "Pzt", 2 => "Sal", 3 => "Çar", 4 => "Per", 5 => "Cum", 6 => "Cmt", 7 => "Paz" }
+
+    buttons = (0..13).filter_map do |offset|
       d = today + offset.days
-      next if [6, 0].include?(d.cwday) && offset > 0
-      label = offset == 0 ? "Bugün (#{d.strftime('%d/%m')})" : d.strftime("%A %d/%m")
-      label = label.gsub("Monday", "Pzt").gsub("Tuesday", "Sal").gsub("Wednesday", "Çar")
-                    .gsub("Thursday", "Per").gsub("Friday", "Cum").gsub("Saturday", "Cmt").gsub("Sunday", "Paz")
-      Telegram::Bot::Types::InlineKeyboardButton.new(text: label, callback_data: "date_#{d.iso8601}")
-    end.compact.map { |b| [b] }
+      next unless available_days.include?(d.cwday)
+      next if SlotFinder.new(host, et, d).available_slots.empty?
+
+      label = offset == 0 ? "Bugün (#{d.strftime('%d/%m')})" : "#{day_names[d.cwday]} #{d.strftime('%d/%m')}"
+      [Telegram::Bot::Types::InlineKeyboardButton.new(text: label, callback_data: "date_#{d.iso8601}")]
+    end
+
+    if buttons.empty?
+      send_text(chat_id, "😔 Önümüzdeki 2 hafta içinde müsait gün bulunmuyor.")
+      session.reset!
+      return
+    end
 
     kb = Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: buttons)
     send_text(chat_id, "📅 *Hangi gün için randevu almak istersiniz?*", parse_mode: "Markdown", reply_markup: kb)
@@ -391,6 +403,7 @@ class TelegramBotService
 
     begin
       booking.confirm!
+      BookingMailer.booking_confirmed(booking).deliver_later rescue nil
       edit_message(chat_id, callback.message.message_id,
         "✅ *Randevu Onaylandı*\n\n" \
         "👤 #{booking.invitee_name}\n" \
@@ -413,6 +426,7 @@ class TelegramBotService
 
     begin
       booking.decline!
+      BookingMailer.booking_declined(booking).deliver_later rescue nil
       edit_message(chat_id, callback.message.message_id,
         "❌ *Randevu Reddedildi*\n\n" \
         "👤 #{booking.invitee_name}\n" \
@@ -427,19 +441,27 @@ class TelegramBotService
 
   def send_text(chat_id, text, **opts)
     bot.api.send_message(chat_id: chat_id, text: text, **opts)
-  rescue Telegram::Bot::Exceptions::ResponseError => e
-    Rails.logger.error("Telegram send error: #{e.message}")
+  rescue => e
+    puts "SEND ERROR: #{e.class}: #{e.message}"
+    retry_without_markdown(chat_id, text, opts) if opts[:parse_mode]
   end
 
   def edit_message(chat_id, message_id, text, **opts)
     bot.api.edit_message_text(chat_id: chat_id, message_id: message_id, text: text, **opts)
-  rescue Telegram::Bot::Exceptions::ResponseError => e
-    Rails.logger.error("Telegram edit error: #{e.message}")
+  rescue => e
+    puts "EDIT ERROR: #{e.class}: #{e.message}"
   end
 
   def answer_callback(callback_id)
     bot.api.answer_callback_query(callback_query_id: callback_id)
-  rescue Telegram::Bot::Exceptions::ResponseError => e
-    Rails.logger.error("Telegram callback error: #{e.message}")
+  rescue => e
+    puts "CALLBACK ERROR: #{e.class}: #{e.message}"
+  end
+
+  def retry_without_markdown(chat_id, text, opts)
+    clean = text.gsub("*", "").gsub("_", "")
+    bot.api.send_message(chat_id: chat_id, text: clean, **opts.except(:parse_mode))
+  rescue => e
+    puts "RETRY SEND ERROR: #{e.class}: #{e.message}"
   end
 end

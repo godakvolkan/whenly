@@ -1,6 +1,9 @@
+require "telegram/bot"
+
 namespace :telegram do
   desc "Start Telegram bot in polling mode"
   task bot: :environment do
+    $stdout.sync = true
     token = ENV.fetch("TELEGRAM_BOT_TOKEN")
     puts "Starting Telegram bot polling..."
 
@@ -9,14 +12,18 @@ namespace :telegram do
       puts "Bot is running. Listening for messages..."
 
       bot.listen do |update|
+        puts "Update received: #{update.class.name}"
         case update
         when Telegram::Bot::Types::Message
+          puts "Message from #{update.chat.id}: #{update.text}"
           service.handle_message(update)
         when Telegram::Bot::Types::CallbackQuery
+          puts "Callback: #{update.data}"
           service.handle_callback(update)
         end
       rescue => e
-        Rails.logger.error("Telegram bot error: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
+        puts "ERROR: #{e.class}: #{e.message}"
+        puts e.backtrace.first(5).join("\n")
       end
     end
   end
