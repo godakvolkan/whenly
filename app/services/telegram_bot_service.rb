@@ -413,7 +413,6 @@ class TelegramBotService
 
       send_ics_file(chat_id, booking) if booking.confirmed?
 
-      TelegramNotifyJob.perform_later(booking.id, "new_booking")
       TelegramReminderJob.set(wait_until: booking.starts_at - 1.hour).perform_later(booking.id) if booking.starts_at > 1.hour.from_now
 
       session.update!(state: "idle")
