@@ -321,15 +321,28 @@ class TelegramBotService
       booking = result.booking
       session.set(:booking_id, booking.id)
 
+      invitee_email = session.get("invitee_email")
+      no_show_forced = !et.requires_approval && booking.pending? && SchedulingRules.repeat_no_show?(host, invitee_email)
+
       status_text = booking.pending? ? "⏳ Onay Bekliyor" : "✅ Onaylandı"
+      reason = if no_show_forced
+                 "⚠️ Daha önce 2 kez katılmadığınız tespit edildiğinden randevunuz ev sahibi onayına düşmüştür."
+               elsif booking.pending?
+                 "Ev sahibi onayladığında bildirim alacaksınız."
+               else
+                 "Randevunuz kesinleşti!"
+               end
+      location = et.location
+      loc_line = location.present? && booking.confirmed? ? "\n📍 *Konum:* #{location}" : ""
+
       send_text(chat_id,
         "🎉 *Randevunuz oluşturuldu!*\n\n" \
         "👤 *Ev Sahibi:* #{host.name}\n" \
         "📌 *Tür:* #{et.name}\n" \
         "📅 *Tarih:* #{booking.starts_at.in_time_zone('Istanbul').strftime('%d.%m.%Y')}\n" \
         "🕐 *Saat:* #{booking.starts_at.in_time_zone('Istanbul').strftime('%H:%M')} - #{booking.ends_at.in_time_zone('Istanbul').strftime('%H:%M')}\n" \
-        "📊 *Durum:* #{status_text}\n\n" \
-        "#{booking.pending? ? 'Ev sahibi onayladığında bildirim alacaksınız.' : 'Randevunuz kesinleşti!'}",
+        "📊 *Durum:* #{status_text}#{loc_line}\n\n" \
+        "#{reason}",
         parse_mode: "Markdown")
 
       TelegramNotifyJob.perform_later(booking.id, "new_booking")
@@ -337,7 +350,15 @@ class TelegramBotService
 
       session.update!(state: "idle")
     else
-      send_text(chat_id, "❌ *Hata:* #{result.error}\n\nTekrar denemek için /randevu yazın.", parse_mode: "Markdown")
+      error_msg = result.error
+      tip = case error_msg
+            when /aynı gün/i then "\n💡 Aynı gün içinde yalnızca bir randevu alabilirsiniz. Farklı bir gün seçin."
+            when /2 saat|onceden/i then "\n💡 Randevu en az 2 saat öncesinden alınmalıdır."
+            when /çalışma saatleri/i then "\n💡 Seçtiğiniz saat ev sahibinin çalışma saatleri dışındadır."
+            when /aktif randevu|başka bir/i then "\n💡 Bu saatte zaten bir randevu bulunuyor. Başka bir saat deneyin."
+            else ""
+            end
+      send_text(chat_id, "❌ *Hata:* #{error_msg}#{tip}\n\nTekrar denemek için /randevu yazın.", parse_mode: "Markdown")
       session.reset!
     end
   end
