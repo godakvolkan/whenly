@@ -7,11 +7,14 @@
   <div class="card" style="margin-bottom: 24px;">
     <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">API Anahtarınız</h3>
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-      <code style="background: var(--color-bg); padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; flex: 1; word-break: break-all; border: 1px solid var(--color-border);">
+      <code id="api-token" style="background: var(--color-bg); padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; flex: 1; word-break: break-all; border: 1px solid var(--color-border); filter: blur(5px); cursor: pointer;" onclick="this.style.filter = this.style.filter ? '' : 'blur(5px)'" title="Görmek için tıklayın">
         <%= @api_token %>
       </code>
     </div>
-    <%= button_to "Yeni Anahtar Oluştur", panel_regenerate_api_token_path, method: :patch, class: "btn btn-sm btn-outline", data: { turbo_confirm: "Mevcut anahtar geçersiz olacak. Emin misiniz?" } %>
+    <div style="display: flex; gap: 8px;">
+      <button type="button" class="btn btn-sm btn-outline" onclick="navigator.clipboard.writeText(document.getElementById('api-token').textContent.trim()); this.textContent='Kopyalandı!'; setTimeout(() => this.textContent='Kopyala', 2000)">Kopyala</button>
+      <%= button_to "Yeni Anahtar Oluştur", panel_regenerate_api_token_path, method: :patch, class: "btn btn-sm btn-outline", data: { turbo_confirm: "Mevcut anahtar geçersiz olacak. Emin misiniz?" } %>
+    </div>
   </div>
 
   <div class="card" style="margin-bottom: 24px;">
@@ -62,7 +65,7 @@
 
   <div class="card">
     <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Kullanım Örneği</h3>
-    <pre style="background: #1E293B; color: #E2E8F0; padding: 16px; border-radius: var(--radius-sm); font-size: 13px; overflow-x: auto; line-height: 1.6;"><code>curl -H "Authorization: Bearer <%= @api_token %>" \
+    <pre style="background: #1E293B; color: #E2E8F0; padding: 16px; border-radius: var(--radius-sm); font-size: 13px; overflow-x: auto; line-height: 1.6;"><code>curl -H "Authorization: Bearer YOUR_API_TOKEN" \
      <%= request.base_url %>/api/v1/bookings</code></pre>
   </div>
 </div>
