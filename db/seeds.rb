@@ -12,14 +12,18 @@ mentorluk = user.event_types.find_or_create_by!(slug: "mentorluk") do |et|
   et.duration_minutes = 30
   et.requires_approval = true
   et.approval_window_hours = 24
+  et.location = "https://meet.google.com/abc-defg-hij"
 end
+mentorluk.update!(location: "https://meet.google.com/abc-defg-hij") if mentorluk.location.blank?
 
 tanitim = user.event_types.find_or_create_by!(slug: "tanitim") do |et|
   et.name = "Tanitim Gorusmesi"
   et.duration_minutes = 15
   et.requires_approval = false
   et.approval_window_hours = nil
+  et.location = "Samsun Universitesi, B Blok, Oda 204"
 end
+tanitim.update!(location: "Samsun Universitesi, B Blok, Oda 204") if tanitim.location.blank?
 
 # Müsaitlik Kuralları (Pzt-Cum 09:00 - 17:00)
 (1..5).each do |day|

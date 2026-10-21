@@ -34,6 +34,12 @@
     <div class="form-help">Ev sahibi bu süre içinde onaylamazsa randevu otomatik olarak süresi doldu (expired) sayılır ve iptal edilir.</div>
   </div>
 
+  <div class="form-group">
+    <%= f.label :location, "Toplantı Yeri / Link", class: "form-label" %>
+    <%= f.text_field :location, class: "form-control", placeholder: "Örn: https://meet.google.com/xxx veya Oda 204, B Blok" %>
+    <div class="form-help">Randevu onaylandığında ve hatırlatmada davetliye gönderilir.</div>
+  </div>
+
   <div style="display: flex; gap: 12px; margin-top: 24px;">
     <%= f.submit (event_type.persisted? ? "Güncelle" : "Oluştur"), class: "btn btn-primary" %>
     <%= link_to "İptal", panel_event_types_path, class: "btn btn-outline" %>

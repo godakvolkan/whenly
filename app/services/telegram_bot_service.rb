@@ -83,10 +83,13 @@ class TelegramBotService
     session = TelegramSession.find_by("data->>'booking_id' = ?", booking.id.to_s)
     return unless session
 
+    location = booking.event_type.location
+    loc_line = location.present? ? "\n📍 *Konum:* #{location}" : ""
+
     text = "📋 *Randevu Güncelleme*\n\n" \
            "📅 #{booking.starts_at.in_time_zone('Istanbul').strftime('%d.%m.%Y %H:%M')}\n" \
            "📌 #{booking.event_type.name}\n" \
-           "📊 *Durum:* #{status_text}"
+           "📊 *Durum:* #{status_text}#{loc_line}"
 
     send_text(session.chat_id, text, parse_mode: "Markdown")
   end
@@ -95,12 +98,15 @@ class TelegramBotService
     user = booking.user
     time_str = booking.starts_at.in_time_zone("Istanbul").strftime("%H:%M")
 
+    location = booking.event_type.location
+    loc_line = location.present? ? "\n📍 *Konum:* #{location}" : ""
+
     if user.telegram_chat_id
       send_text(user.telegram_chat_id,
         "⏰ *Hatırlatma:* 1 saat sonra randevunuz var!\n\n" \
         "👤 #{booking.invitee_name}\n" \
         "🕐 #{time_str}\n" \
-        "📌 #{booking.event_type.name}",
+        "📌 #{booking.event_type.name}#{loc_line}",
         parse_mode: "Markdown")
     end
 
@@ -109,7 +115,7 @@ class TelegramBotService
       send_text(session.chat_id,
         "⏰ *Hatırlatma:* 1 saat sonra randevunuz var!\n\n" \
         "👤 #{user.name} ile #{booking.event_type.name}\n" \
-        "🕐 #{time_str}",
+        "🕐 #{time_str}#{loc_line}",
         parse_mode: "Markdown")
     end
   end
@@ -404,11 +410,13 @@ class TelegramBotService
     begin
       booking.confirm!
       BookingMailer.booking_confirmed(booking).deliver_later rescue nil
+      location = booking.event_type.location
+      loc_line = location.present? ? "\n📍 *Konum:* #{location}" : ""
       edit_message(chat_id, callback.message.message_id,
         "✅ *Randevu Onaylandı*\n\n" \
         "👤 #{booking.invitee_name}\n" \
         "📅 #{booking.starts_at.in_time_zone('Istanbul').strftime('%d.%m.%Y %H:%M')}\n" \
-        "📌 #{booking.event_type.name}",
+        "📌 #{booking.event_type.name}#{loc_line}",
         parse_mode: "Markdown")
       notify_invitee_status(booking, "✅ Onaylandı")
       TelegramReminderJob.set(wait_until: booking.starts_at - 1.hour).perform_later(booking.id) if booking.starts_at > 1.hour.from_now

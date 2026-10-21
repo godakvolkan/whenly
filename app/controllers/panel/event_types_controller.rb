@@ -46,6 +46,6 @@ class Panel::EventTypesController < Panel::BaseController
   end
 
   def event_type_params
-    params.require(:event_type).permit(:name, :duration_minutes, :requires_approval, :approval_window_hours, :slug)
+    params.require(:event_type).permit(:name, :duration_minutes, :requires_approval, :approval_window_hours, :slug, :location)
   end
 end
