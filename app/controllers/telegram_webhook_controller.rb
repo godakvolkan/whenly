@@ -1,4 +1,5 @@
 class TelegramWebhookController < ApplicationController
+  allow_unauthenticated_access
   skip_forgery_protection
 
   def create
