@@ -78,7 +78,8 @@ Rails.application.routes.draw do
   patch "/b/:token/accept_reschedule", to: "public_bookings#accept_reschedule", as: :accept_reschedule_booking
   patch "/b/:token/reject_reschedule", to: "public_bookings#reject_reschedule", as: :reject_reschedule_booking
 
-  # Davetli rezervasyon rotası (Wildcard rota en sonda olmalıdır)
+  # Davetli profil ve rezervasyon rotaları (Wildcard rotalar en sonda olmalıdır)
+  get "/:slug", to: "public_profiles#show", as: :public_profile
   get "/:slug/:event_type", to: "public_bookings#new", as: :new_public_booking
   post "/:slug/:event_type", to: "public_bookings#create", as: :public_booking
 end

@@ -1,7 +1,18 @@
 <div class="public-booking-layout">
-  <div class="booking-box">
-    <div class="booking-header">
-      <div class="host-name"><%= @user.name %></div>
+  <div style="width: 100%; max-width: 680px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 0 4px;">
+      <a href="/" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+        <img src="/icon.svg" width="24" height="24" alt="Whenly" style="border-radius: 6px;">
+        <span style="font-weight: 800; font-size: 17px; color: var(--color-primary);">Whenly</span>
+      </a>
+      <%= link_to "/#{@user.slug}", style: "font-size: 13px; color: var(--color-text-secondary); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;" do %>
+        <span>&larr; Tüm Randevular</span>
+      <% end %>
+    </div>
+
+    <div class="booking-box">
+      <div class="booking-header">
+        <div class="host-name"><%= link_to @user.name, "/#{@user.slug}", style: "color: inherit; text-decoration: none;" %></div>
       <h1 class="booking-title"><%= @event_type.name %></h1>
       <div class="booking-meta">
         <span style="display: inline-flex; align-items: center; gap: 4px;">
@@ -93,4 +104,13 @@
       </div>
     </div>
   </div>
+
+  <div style="text-align: center; margin-top: 18px;">
+    <a href="/" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--color-text-secondary); font-size: 13px; font-weight: 500;">
+      <span>Powered by</span>
+      <img src="/icon.svg" width="16" height="16" alt="Whenly" style="border-radius: 3px;">
+      <strong style="color: var(--color-text);">Whenly</strong>
+    </a>
+  </div>
+</div>
 </div>

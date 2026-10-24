@@ -1,0 +1,98 @@
+<% content_for :title, "#{@user.name} - Randevu Planlama | Whenly" %>
+
+<div class="public-booking-layout" style="background: linear-gradient(135deg, #EEF2FF 0%, #F8FAFC 100%); min-height: 100vh; padding: 40px 16px;">
+  <div style="max-width: 680px; margin: 0 auto; width: 100%;">
+    
+    <!-- Whenly Üst Marka Barı -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 0 4px;">
+      <a href="/" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+        <img src="/icon.svg" width="28" height="28" alt="Whenly" style="border-radius: 6px; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);">
+        <span style="font-weight: 800; font-size: 18px; color: var(--color-primary); letter-spacing: -0.5px;">Whenly</span>
+      </a>
+      <div>
+        <% if authenticated? %>
+          <%= link_to "Panele Git &rarr;".html_safe, (current_user.client? ? client_root_path : panel_root_path), class: "btn btn-sm btn-outline", style: "font-size: 12px; padding: 5px 12px;" %>
+        <% else %>
+          <%= link_to "Giriş Yap", login_path, class: "btn btn-sm btn-outline", style: "font-size: 12px; padding: 5px 12px;" %>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Profil Kartı -->
+    <div class="booking-box" style="margin-bottom: 24px; overflow: hidden; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+      <div style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); padding: 36px 32px 32px; color: #ffffff; text-align: center; position: relative;">
+        <!-- Profil Avatarı / İkonu -->
+        <div style="width: 80px; height: 80px; border-radius: 50%; background: #ffffff; color: var(--color-primary); font-size: 30px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); border: 3px solid rgba(255, 255, 255, 0.8);">
+          <%= @user.name.to_s.split.map(&:first).join.upcase.presence || "W" %>
+        </div>
+        <h1 style="font-size: 24px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.3px;"><%= @user.name %></h1>
+        <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Whenly Doğrulanmış Profil
+        </div>
+        <p style="font-size: 14px; opacity: 0.9; margin: 12px auto 0; max-width: 440px; line-height: 1.5;">
+          Aşağıdaki randevu seçeneklerinden size uygun olanı seçerek doğrudan takvimimden randevu alabilirsiniz.
+        </p>
+      </div>
+
+      <!-- Randevu Türleri Listesi -->
+      <div style="padding: 28px 24px; background: #ffffff;">
+        <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-secondary); margin-bottom: 16px;">
+          Müsait Randevu Türleri (<%= @event_types.count %>)
+        </div>
+
+        <% if @event_types.any? %>
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <% @event_types.each do |et| %>
+              <div class="card" style="padding: 18px 20px; transition: all 0.2s ease; border: 1.5px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+                <div style="flex: 1; min-width: 220px;">
+                  <h3 style="font-size: 17px; font-weight: 700; color: var(--color-text); margin: 0 0 6px 0;">
+                    <%= et.name %>
+                  </h3>
+                  <div style="display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--color-text-secondary); flex-wrap: wrap;">
+                    <span style="display: inline-flex; align-items: center; gap: 4px;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                      <%= et.duration_minutes %> Dakika
+                    </span>
+                    <% if et.location.present? %>
+                      <span style="display: inline-flex; align-items: center; gap: 4px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        <%= et.location.start_with?("http") ? "Online (Google Meet)" : et.location.truncate(30) %>
+                      </span>
+                    <% end %>
+                    <% if et.requires_approval? %>
+                      <span class="badge badge-warning" style="font-size: 11px;">Onay Gerekli</span>
+                    <% else %>
+                      <span class="badge badge-confirmed" style="font-size: 11px;">Anında Onay</span>
+                    <% end %>
+                  </div>
+                </div>
+
+                <div>
+                  <%= link_to new_public_booking_path(slug: @user.slug, event_type: et.slug), class: "btn btn-primary", style: "display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; font-weight: 600;" do %>
+                    <span>Randevu Al</span>
+                    <span style="font-size: 16px;">&rarr;</span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <div style="text-align: center; padding: 32px 16px; color: var(--color-text-secondary);">
+            <p style="margin: 0;">Şu anda aktif bir randevu türü bulunmuyor.</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Alt Whenly Markası -->
+    <div style="text-align: center; margin-top: 24px;">
+      <a href="/" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--color-text-secondary); font-size: 13px; font-weight: 500;">
+        <span>Powered by</span>
+        <img src="/icon.svg" width="16" height="16" alt="Whenly" style="border-radius: 3px;">
+        <strong style="color: var(--color-text);">Whenly</strong>
+      </a>
+    </div>
+
+  </div>
+</div>
