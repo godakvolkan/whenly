@@ -1,7 +1,10 @@
+require "telegram/bot"
+require "faraday"
+
 class TelegramBotService
   LANGS = {
     "tr" => {
-      welcome: "👋 *Whenly Randevu Sistemine Hoş Geldiniz!*\n\nBu bot ile kolayca randevu alabilirsiniz.\n\n📌 *Komutlar:*\n/randevu — Yeni randevu al\n/bagla — Ev sahibi hesabınızı bağlayın\n/randevularim — Bekleyen randevularınızı görün\n/lang — Dil değiştir (TR/EN)\n/iptal — Mevcut işlemi iptal et",
+      welcome: "👋 *Whenly Randevu Sistemine Hoş Geldiniz!*\n\nBu bot ile kolayca randevu alabilir ve profilinizi yönetebilirsiniz.\n\n📌 *Komutlar:*\n/randevu — Yeni randevu al\n/bagla — Ev sahibi hesabınızı bağlayın\n/randevularim — Randevuları ve tarih değişikliklerini inceleyin\n/profil — Profil bilgilerinizi görün ve düzenleyin\n/lang — Dil değiştir (TR/EN)\n/iptal — Mevcut işlemi iptal et",
       cancel: "İşlem iptal edildi.",
       enter_name: "👤 *Adınızı ve soyadınızı yazın:*",
       enter_email: "📧 *E-posta adresinizi yazın:*",
@@ -29,7 +32,7 @@ class TelegramBotService
       today: "Bugün"
     },
     "en" => {
-      welcome: "👋 *Welcome to Whenly Booking System!*\n\nBook appointments easily with this bot.\n\n📌 *Commands:*\n/randevu — Book an appointment\n/bagla — Link your host account\n/randevularim — View pending bookings\n/lang — Change language (TR/EN)\n/iptal — Cancel current operation",
+      welcome: "👋 *Welcome to Whenly Booking System!*\n\nBook appointments and manage your profile.\n\n📌 *Commands:*\n/randevu — Book an appointment\n/bagla — Link your host account\n/randevularim — View bookings and reschedule requests\n/profil — View and edit profile\n/lang — Change language (TR/EN)\n/iptal — Cancel current operation",
       cancel: "Operation cancelled.",
       enter_name: "👤 *Enter your full name:*",
       enter_email: "📧 *Enter your email address:*",
@@ -80,6 +83,8 @@ class TelegramBotService
       connect_host_account(chat_id, $1.strip, session)
     when "/randevularim"
       show_host_bookings(chat_id)
+    when "/profil", "/profile"
+      show_profile(chat_id, session)
     when "/lang", "/lang tr", "/lang en"
       switch_language(chat_id, text, session)
     when "/iptal"
@@ -108,6 +113,19 @@ class TelegramBotService
       approve_booking(chat_id, $1.to_i, callback)
     when /\Adecline_(\d+)\z/
       decline_booking(chat_id, $1.to_i, callback)
+    when "prof_name"
+      send_text(chat_id, "✏️ *Yeni Adınızı ve Soyadınızı yazın:*", parse_mode: "Markdown")
+      session.transition_to!("edit_profile_name")
+    when "prof_slug"
+      send_text(chat_id, "🔗 *Yeni sayfa adresinizi (slug) yazın:*\n(Örn: `dr-volkan`)", parse_mode: "Markdown")
+      session.transition_to!("edit_profile_slug")
+    when "prof_pwd"
+      send_text(chat_id, "🔑 *Yeni şifrenizi yazın:* (En az 6 karakter)", parse_mode: "Markdown")
+      session.transition_to!("edit_profile_password")
+    when /\Aaccept_reschedule_(\d+)\z/
+      accept_reschedule_callback(chat_id, $1.to_i, callback)
+    when /\Areject_reschedule_(\d+)\z/
+      reject_reschedule_callback(chat_id, $1.to_i, callback)
     end
 
     answer_callback(callback.id)
@@ -117,12 +135,14 @@ class TelegramBotService
     user = booking.user
     return unless user.telegram_chat_id
 
+    note_line = booking.notes.present? ? "\n📝 *Davetli Notu:* #{booking.notes}" : ""
+
     text = "📋 *Yeni Randevu Talebi*\n\n" \
            "👤 *Davetli:* #{booking.invitee_name}\n" \
            "📧 *E-posta:* #{booking.invitee_email}\n" \
            "📅 *Tarih:* #{booking.starts_at.in_time_zone('Istanbul').strftime('%d.%m.%Y')}\n" \
            "🕐 *Saat:* #{booking.starts_at.in_time_zone('Istanbul').strftime('%H:%M')} - #{booking.ends_at.in_time_zone('Istanbul').strftime('%H:%M')}\n" \
-           "📌 *Tür:* #{booking.event_type.name}\n" \
+           "📌 *Tür:* #{booking.event_type.name}#{note_line}\n" \
            "📊 *Durum:* #{booking.status == 'pending' ? 'Onay Bekliyor' : 'Onaylandı'}"
 
     kb = nil
@@ -332,7 +352,52 @@ class TelegramBotService
         return
       end
       session.set(:invitee_email, text)
+      send_text(chat_id, "📝 *Randevu Notu / Açıklama:*\nVarsa hekime/uzmana iletmek istediğiniz notu yazın.\n\n_Not eklemek istemiyorsanız_ *geç* _yazabilirsiniz._", parse_mode: "Markdown")
+      session.transition_to!("enter_notes")
+    when "enter_notes"
+      clean_note = text.downcase.strip.in?(%w[geç gec /gec - yok hayır hayir]) ? nil : text
+      session.set(:notes, clean_note)
       create_booking_from_session(chat_id, session)
+    when "edit_profile_name"
+      if text.length < 2
+        send_text(chat_id, "Lütfen en az 2 karakterden oluşan geçerli bir ad girin.")
+        return
+      end
+      user = User.find_by(telegram_chat_id: chat_id)
+      if user
+        user.update!(name: text)
+        session.reset!
+        send_text(chat_id, "✅ Adınız başarıyla güncellendi: *#{user.name}*", parse_mode: "Markdown")
+        show_profile(chat_id, session)
+      end
+    when "edit_profile_slug"
+      clean_slug = text.strip.downcase.parameterize
+      if clean_slug.blank?
+        send_text(chat_id, "Lütfen geçerli bir sayfa adresi (slug) girin.")
+        return
+      end
+      user = User.find_by(telegram_chat_id: chat_id)
+      if user
+        if User.where.not(id: user.id).exists?(slug: clean_slug)
+          send_text(chat_id, "❌ Bu sayfa adı (`#{clean_slug}`) zaten başkası tarafından kullanılıyor. Lütfen farklı bir slug deneyin.")
+          return
+        end
+        user.update!(slug: clean_slug)
+        session.reset!
+        send_text(chat_id, "✅ Rezervasyon bağlantı adresiniz güncellendi:\n*#{clean_slug}*", parse_mode: "Markdown")
+        show_profile(chat_id, session)
+      end
+    when "edit_profile_password"
+      if text.length < 6
+        send_text(chat_id, "❌ Şifre en az 6 karakter olmalıdır. Lütfen tekrar deneyin:")
+        return
+      end
+      user = User.find_by(telegram_chat_id: chat_id)
+      if user
+        user.update!(password: text, password_confirmation: text)
+        session.reset!
+        send_text(chat_id, "✅ Giriş şifreniz başarıyla güncellendi!", parse_mode: "Markdown")
+      end
     else
       handle_natural_language(chat_id, text, session)
     end
@@ -362,7 +427,8 @@ class TelegramBotService
       send_text(chat_id,
         "🤖 Komutları kullanabilirsiniz:\n\n" \
         "/randevu — Yeni randevu al\n" \
-        "/bagla — Hesap bağla\n\n" \
+        "/bagla — Hesap bağla\n" \
+        "/profil — Profil ve hesap yönetimi\n\n" \
         "Ya da doğal dille yazın:\n" \
         "\"Mentorluk için yer var mı?\"\n" \
         "\"Tanıtım randevusu almak istiyorum\"")
@@ -379,7 +445,8 @@ class TelegramBotService
       params: {
         invitee_name: session.get("invitee_name"),
         invitee_email: session.get("invitee_email"),
-        starts_at: session.get("starts_at")
+        starts_at: session.get("starts_at"),
+        notes: session.get("notes")
       }
     ).call
 
@@ -400,6 +467,7 @@ class TelegramBotService
                end
       location = et.location
       loc_line = location.present? && booking.confirmed? ? "\n📍 *Konum:* #{location}" : ""
+      note_line = booking.notes.present? ? "\n📝 *Not:* #{booking.notes}" : ""
 
       send_text(chat_id,
         "#{t(session, :booking_created)}\n\n" \
@@ -407,7 +475,7 @@ class TelegramBotService
         "📌 *Tür:* #{et.name}\n" \
         "📅 *Tarih:* #{booking.starts_at.in_time_zone('Istanbul').strftime('%d.%m.%Y')}\n" \
         "🕐 *Saat:* #{booking.starts_at.in_time_zone('Istanbul').strftime('%H:%M')} - #{booking.ends_at.in_time_zone('Istanbul').strftime('%H:%M')}\n" \
-        "📊 *Durum:* #{status_text}#{loc_line}\n\n" \
+        "📊 *Durum:* #{status_text}#{loc_line}#{note_line}\n\n" \
         "#{reason}",
         parse_mode: "Markdown")
 
@@ -450,17 +518,38 @@ class TelegramBotService
 
     pending = user.bookings.where(status: "pending").order(:starts_at).limit(10)
     upcoming = user.bookings.where(status: "confirmed").where("starts_at > ?", Time.current).order(:starts_at).limit(10)
+    rescheduling = user.bookings.where(reschedule_status: "pending").order(:starts_at).limit(10)
 
-    if pending.empty? && upcoming.empty?
-      send_text(chat_id, "📭 Bekleyen veya yaklaşan randevunuz bulunmuyor.")
+    if pending.empty? && upcoming.empty? && rescheduling.empty?
+      send_text(chat_id, "📭 Bekleyen, yaklaşan veya tarih değişikliği bekleyen randevunuz bulunmuyor.")
       return
+    end
+
+    if rescheduling.any?
+      text = "🔄 *Tarih Değişikliği Bekleyenler (#{rescheduling.count}):*\n\n"
+      rescheduling.each do |b|
+        by_label = b.rescheduled_by == "client" ? "Danışan talep etti" : "Siz teklif ettiniz"
+        text += "• #{b.invitee_name} — #{b.event_type.name} (#{by_label})\n" \
+                "  Mevcut: #{b.starts_at.in_time_zone('Istanbul').strftime('%d.%m %H:%M')}\n" \
+                "  👉 Yeni: #{b.reschedule_starts_at.in_time_zone('Istanbul').strftime('%d.%m %H:%M')}\n\n"
+      end
+
+      buttons = rescheduling.select { |b| b.rescheduled_by == "client" }.map do |b|
+        [
+          Telegram::Bot::Types::InlineKeyboardButton.new(text: "✅ Yeni Saati Onayla: #{b.invitee_name}", callback_data: "accept_reschedule_#{b.id}"),
+          Telegram::Bot::Types::InlineKeyboardButton.new(text: "❌ Reddet: #{b.invitee_name}", callback_data: "reject_reschedule_#{b.id}")
+        ]
+      end
+      kb = buttons.any? ? Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: buttons) : nil
+      send_text(chat_id, text, parse_mode: "Markdown", reply_markup: kb)
     end
 
     text = ""
     if pending.any?
       text += "⏳ *Onay Bekleyen (#{pending.count}):*\n\n"
       pending.each do |b|
-        text += "• #{b.invitee_name} — #{b.event_type.name}\n" \
+        note_str = b.notes.present? ? " (Not: #{b.notes})" : ""
+        text += "• #{b.invitee_name} — #{b.event_type.name}#{note_str}\n" \
                 "  📅 #{b.starts_at.in_time_zone('Istanbul').strftime('%d.%m %H:%M')}\n\n"
       end
 
@@ -482,6 +571,146 @@ class TelegramBotService
                 "  📅 #{b.starts_at.in_time_zone('Istanbul').strftime('%d.%m %H:%M')}\n\n"
       end
       send_text(chat_id, text, parse_mode: "Markdown")
+    end
+  end
+
+  def show_profile(chat_id, session)
+    user = User.find_by(telegram_chat_id: chat_id)
+    unless user
+      send_text(chat_id, "⚠️ Hesabınız henüz bağlı değil.\n\nÖnce `/bagla eposta@adresiniz.com` komutu ile hesabınızı bağlayın.", parse_mode: "Markdown")
+      return
+    end
+
+    booking_url = "https://whenly-cpyy.onrender.com/#{user.slug}/#{user.event_types.first&.slug}"
+
+    text = "👤 *Kullanıcı Profil Bilgileri*\n\n" \
+           "• *Ad Soyad:* #{user.name}\n" \
+           "• *E-posta:* #{user.email_address}\n" \
+           "• *Sayfa Adresi (Slug):* `#{user.slug}`\n" \
+           "• *Randevu Sayfanız:* #{booking_url}\n" \
+           "• *Telegram Chat ID:* `#{chat_id}`\n\n" \
+           "Aşağıdaki butonlarla profil bilgilerinizi güncelleyebilirsiniz:"
+
+    kb = Telegram::Bot::Types::InlineKeyboardMarkup.new(
+      inline_keyboard: [
+        [
+          Telegram::Bot::Types::InlineKeyboardButton.new(text: "✏️ Adı Değiştir", callback_data: "prof_name"),
+          Telegram::Bot::Types::InlineKeyboardButton.new(text: "🔗 Slug Değiştir", callback_data: "prof_slug")
+        ],
+        [
+          Telegram::Bot::Types::InlineKeyboardButton.new(text: "🔑 Şifre Değiştir", callback_data: "prof_pwd")
+        ]
+      ]
+    )
+
+    send_text(chat_id, text, parse_mode: "Markdown", reply_markup: kb)
+  end
+
+  def notify_host_reschedule_request(booking)
+    user = booking.user
+    return unless user.telegram_chat_id
+
+    old_time = booking.starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y %H:%M")
+    new_time = booking.reschedule_starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y %H:%M")
+    note_line = booking.reschedule_note.present? ? "\n📝 *Danışan Açıklaması:* #{booking.reschedule_note}" : ""
+
+    text = "🔄 *Tarih/Saat Değişikliği Talebi!*\n\n" \
+           "👤 *Davetli:* #{booking.invitee_name}\n" \
+           "📌 *Tür:* #{booking.event_type.name}\n\n" \
+           "📅 *Mevcut Randevu:* #{old_time}\n" \
+           "👉 *Talep Edilen Yeni Tarih:* #{new_time}#{note_line}\n\n" \
+           "Bu saat değişikliğini onaylıyor musunuz?"
+
+    kb = Telegram::Bot::Types::InlineKeyboardMarkup.new(
+      inline_keyboard: [
+        [
+          Telegram::Bot::Types::InlineKeyboardButton.new(text: "✅ Yeni Saati Onayla", callback_data: "accept_reschedule_#{booking.id}"),
+          Telegram::Bot::Types::InlineKeyboardButton.new(text: "❌ Reddet", callback_data: "reject_reschedule_#{booking.id}")
+        ]
+      ]
+    )
+
+    send_text(user.telegram_chat_id, text, parse_mode: "Markdown", reply_markup: kb)
+  end
+
+  def notify_reschedule_accepted(booking)
+    user = booking.user
+    time_str = booking.starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y %H:%M")
+
+    invitee_session = TelegramSession.find_by("data->>'booking_id' = ?", booking.id.to_s)
+    if invitee_session
+      send_text(invitee_session.chat_id,
+        "🎉 *Randevu Tarihiniz Başarıyla Güncellendi!*\n\n" \
+        "👤 *Ev Sahibi:* #{user.name}\n" \
+        "📅 *Yeni Randevu Saati:* #{time_str}\n" \
+        "📌 *Tür:* #{booking.event_type.name}",
+        parse_mode: "Markdown")
+      send_ics_file(invitee_session.chat_id, booking)
+    end
+
+    if user.telegram_chat_id
+      send_text(user.telegram_chat_id,
+        "✅ *Tarih Değişikliği Tamamlandı*\n\n" \
+        "👤 #{booking.invitee_name}\n" \
+        "📅 Yeni Randevu Saati: #{time_str}",
+        parse_mode: "Markdown")
+      send_ics_file(user.telegram_chat_id, booking)
+    end
+  end
+
+  def notify_reschedule_rejected(booking)
+    user = booking.user
+    invitee_session = TelegramSession.find_by("data->>'booking_id' = ?", booking.id.to_s)
+    if invitee_session
+      send_text(invitee_session.chat_id,
+        "❌ *Tarih Değişikliği Talebi Onaylanmadı*\n\n" \
+        "Mevcut randevunuz korunmaktadır:\n" \
+        "📅 #{booking.starts_at.in_time_zone('Istanbul').strftime('%d.%m.%Y %H:%M')}",
+        parse_mode: "Markdown")
+    end
+  end
+
+  def accept_reschedule_callback(chat_id, booking_id, callback)
+    booking = Booking.find_by(id: booking_id)
+    return unless booking
+
+    user = User.find_by(telegram_chat_id: chat_id)
+    return send_text(chat_id, "Bu işlem için yetkiniz yok.") unless user&.id == booking.user_id
+
+    begin
+      booking.accept_reschedule!
+      time_str = booking.starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y %H:%M")
+      edit_message(chat_id, callback.message.message_id,
+        "✅ *Tarih Değişikliği Onaylandı*\n\n" \
+        "👤 #{booking.invitee_name}\n" \
+        "📅 Yeni Tarih: #{time_str}\n" \
+        "📌 #{booking.event_type.name}",
+        parse_mode: "Markdown")
+
+      notify_reschedule_accepted(booking)
+    rescue Booking::InvalidTransition => e
+      send_text(chat_id, "❌ #{e.message}")
+    end
+  end
+
+  def reject_reschedule_callback(chat_id, booking_id, callback)
+    booking = Booking.find_by(id: booking_id)
+    return unless booking
+
+    user = User.find_by(telegram_chat_id: chat_id)
+    return send_text(chat_id, "Bu işlem için yetkiniz yok.") unless user&.id == booking.user_id
+
+    begin
+      booking.reject_reschedule!
+      edit_message(chat_id, callback.message.message_id,
+        "❌ *Tarih Değişikliği Talebi Reddedildi*\n\n" \
+        "👤 #{booking.invitee_name}\n" \
+        "📅 Mevcut Randevu Geçerli: #{booking.starts_at.in_time_zone('Istanbul').strftime('%d.%m.%Y %H:%M')}",
+        parse_mode: "Markdown")
+
+      notify_reschedule_rejected(booking)
+    rescue Booking::InvalidTransition => e
+      send_text(chat_id, "❌ #{e.message}")
     end
   end
 

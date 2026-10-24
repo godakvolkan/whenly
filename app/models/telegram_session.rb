@@ -1,5 +1,5 @@
 class TelegramSession < ApplicationRecord
-  STATES = %w[idle select_host select_event_type select_date select_slot enter_name enter_email].freeze
+  STATES = %w[idle select_host select_event_type select_date select_slot enter_name enter_email enter_notes edit_profile_name edit_profile_slug edit_profile_password].freeze
 
   validates :chat_id, presence: true, uniqueness: true
   validates :state, inclusion: { in: STATES }

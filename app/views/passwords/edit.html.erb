@@ -1,9 +1,45 @@
-<h1>Update your password</h1>
+<div class="auth-page-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo-badge">
+        <img src="/icon.svg" width="36" height="36" alt="Whenly">
+      </div>
+      <h1 class="auth-title">Yeni Şifre Belirleyin</h1>
+      <p class="auth-subtitle">Hesabınız için güçlü ve yeni bir şifre girin</p>
+    </div>
 
-<%= tag.div(flash[:alert], style: "color:red") if flash[:alert] %>
+    <% if flash[:alert] %>
+      <div class="auth-alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <span><%= flash[:alert] %></span>
+      </div>
+    <% end %>
 
-<%= form_with url: password_path(params[:token]), method: :put do |form| %>
-  <%= form.password_field :password, required: true, autocomplete: "new-password", placeholder: "Enter new password", maxlength: 72 %><br>
-  <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", placeholder: "Repeat new password", maxlength: 72 %><br>
-  <%= form.submit "Save" %>
-<% end %>
+    <%= form_with url: password_path(params[:token]), method: :put, local: true, class: "auth-form" do |form| %>
+      <div class="form-group">
+        <%= form.label :password, "Yeni Şifre", class: "auth-label" %>
+        <div class="input-with-icon">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <%= form.password_field :password, required: true, autocomplete: "new-password", placeholder: "••••••••", maxlength: 72, class: "auth-input" %>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :password_confirmation, "Yeni Şifre Tekrarı", class: "auth-label" %>
+        <div class="input-with-icon">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", placeholder: "••••••••", maxlength: 72, class: "auth-input" %>
+        </div>
+      </div>
+
+      <div style="margin-top: 24px;">
+        <%= form.submit "Şifremi Güncelle", class: "auth-btn-primary" %>
+      </div>
+    <% end %>
+
+    <div class="auth-footer">
+      <span>Giriş ekranına dönmek için</span>
+      <%= link_to "Giriş Yap", login_path, class: "auth-link-bold" %>
+    </div>
+  </div>
+</div>

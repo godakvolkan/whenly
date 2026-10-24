@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_24_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -37,6 +37,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_200000) do
     t.string "token", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "notes"
+    t.datetime "reschedule_starts_at"
+    t.datetime "reschedule_ends_at"
+    t.string "rescheduled_by"
+    t.string "reschedule_status"
+    t.text "reschedule_note"
     t.index ["event_type_id"], name: "index_bookings_on_event_type_id"
     t.index ["token"], name: "index_bookings_on_token", unique: true
     t.index ["user_id", "starts_at"], name: "idx_bookings_no_double", unique: true, where: "((status)::text = ANY ((ARRAY['pending'::character varying, 'confirmed'::character varying])::text[]))"
@@ -234,6 +240,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_200000) do
     t.datetime "updated_at", null: false
     t.bigint "telegram_chat_id"
     t.string "api_token"
+    t.string "role", default: "host", null: false
     t.index ["api_token"], name: "index_users_on_api_token", unique: true
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["slug"], name: "index_users_on_slug", unique: true

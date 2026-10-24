@@ -14,6 +14,12 @@ class TelegramNotifyJob < ApplicationJob
       service.notify_invitee_status(booking, "✅ Onaylandı")
     when "declined"
       service.notify_invitee_status(booking, "❌ Reddedildi")
+    when "reschedule_requested"
+      service.notify_host_reschedule_request(booking)
+    when "reschedule_accepted"
+      service.notify_reschedule_accepted(booking)
+    when "reschedule_rejected"
+      service.notify_reschedule_rejected(booking)
     end
   end
 end

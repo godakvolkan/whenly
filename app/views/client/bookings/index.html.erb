@@ -1,0 +1,259 @@
+<div data-controller="tabs">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h1 style="font-size: 26px; font-weight: 800; color: var(--color-text); margin: 0;">Randevularım</h1>
+      <p style="font-size: 14px; color: var(--color-text-secondary); margin-top: 6px;">
+        Aldığınız tüm randevuların onay durumlarını takip edin, takviminize ekleyin veya yönetin.
+      </p>
+    </div>
+  </div>
+
+  <!-- Özet İstatistik Kartları -->
+  <div class="stats-grid" style="margin-bottom: 28px;">
+    <div class="stat-card">
+      <div class="stat-icon" style="background: var(--color-primary-light); color: var(--color-primary);">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+      </div>
+      <div>
+        <div class="stat-value"><%= @pending.count + @upcoming.count + @past.count %></div>
+        <div class="stat-label">Toplam Randevum</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: var(--color-warning-light); color: var(--color-warning);">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      </div>
+      <div>
+        <div class="stat-value"><%= @pending.count %></div>
+        <div class="stat-label">Onay Bekleyen</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: var(--color-success-light); color: var(--color-success);">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      </div>
+      <div>
+        <div class="stat-value"><%= @upcoming.count %></div>
+        <div class="stat-label">Yaklaşan Onaylı</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sekmeler -->
+  <div class="tabs-nav" style="margin-bottom: 24px;">
+    <button type="button" class="tab-btn active" data-tabs-target="tab" data-tab-target="upcoming" data-action="click->tabs#switch">
+      Yaklaşan Randevular
+      <% if @upcoming.any? %>
+        <span class="badge badge-confirmed" style="margin-left: 6px;"><%= @upcoming.count %></span>
+      <% end %>
+    </button>
+    <button type="button" class="tab-btn" data-tabs-target="tab" data-tab-target="pending" data-action="click->tabs#switch">
+      Onay Bekleyenler
+      <% if @pending.any? %>
+        <span class="badge badge-pending" style="margin-left: 6px;"><%= @pending.count %></span>
+      <% end %>
+    </button>
+    <button type="button" class="tab-btn" data-tabs-target="tab" data-tab-target="past" data-action="click->tabs#switch">
+      Geçmiş Randevular
+      <% if @past.any? %>
+        <span class="badge" style="margin-left: 6px; background: #e2e8f0; color: #475569;"><%= @past.count %></span>
+      <% end %>
+    </button>
+  </div>
+
+  <!-- Sekme 1: Yaklaşan Onaylı Randevular -->
+  <div data-tabs-target="panel" data-panel-name="upcoming">
+    <% if @upcoming.any? %>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <% @upcoming.each do |booking| %>
+          <div class="card" style="padding: 24px; border-left: 5px solid var(--color-success);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                  <h3 style="font-size: 18px; font-weight: 700; color: var(--color-text); margin: 0;"><%= booking.event_type.name %></h3>
+                  <span class="badge badge-confirmed">Onaylandı</span>
+                </div>
+                <div style="font-size: 14px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 8px;">
+                  <span>👤 Ev Sahibi: <strong style="color: var(--color-text);"><%= booking.user.name %></strong></span>
+                  <span>•</span>
+                  <span>⏱️ <%= booking.event_type.duration_minutes %> dakika</span>
+                </div>
+              </div>
+
+              <div style="text-align: right;">
+                <div style="font-size: 16px; font-weight: 700; color: var(--color-primary);">
+                  📅 <%= booking.starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y") %>
+                </div>
+                <div style="font-size: 14px; font-weight: 600; color: var(--color-text);">
+                  ⏰ <%= booking.starts_at.in_time_zone("Istanbul").strftime("%H:%M") %> - <%= booking.ends_at.in_time_zone("Istanbul").strftime("%H:%M") %>
+                </div>
+              </div>
+            </div>
+
+            <% if booking.event_type.location.present? %>
+              <div style="margin-top: 16px; padding: 12px 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #166534;">
+                  <span>📍</span>
+                  <span><strong>Toplantı Konumu / Bağlantısı:</strong> <%= booking.event_type.location %></span>
+                </div>
+                <% if booking.event_type.location.match?(/\Ahttps?:\/\//) %>
+                  <%= link_to "Toplantıya Katıl &rarr;".html_safe, booking.event_type.location, target: "_blank", class: "btn btn-sm btn-primary", style: "background: #16a34a; border-color: #16a34a;" %>
+                <% end %>
+              </div>
+            <% end %>
+
+            <% if booking.notes.present? %>
+              <div style="margin-top: 12px; padding: 10px 14px; background: rgba(99, 102, 241, 0.05); border-left: 3px solid var(--color-primary); border-radius: 6px; font-size: 13px;">
+                <strong>📝 Notunuz:</strong> <%= booking.notes %>
+              </div>
+            <% end %>
+
+            <% if booking.reschedule_pending? %>
+              <div style="margin-top: 14px; padding: 14px 16px; background: #fffbeb; border: 1.5px solid #f59e0b; border-radius: 8px;">
+                <% if booking.rescheduled_by == "host" %>
+                  <div style="font-weight: 700; color: #b45309; font-size: 14px;">📢 Ev Sahibi Yeni Bir Tarih & Saat Önerdi:</div>
+                  <div style="font-size: 13.5px; color: #78350f; margin-top: 4px;">
+                    <strong>Önerilen Yeni Tarih:</strong> <%= booking.reschedule_starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y, %H:%M") %> - <%= booking.reschedule_ends_at.in_time_zone("Istanbul").strftime("%H:%M") %>
+                  </div>
+                  <% if booking.reschedule_note.present? %>
+                    <div style="font-size: 12.5px; color: #92400e; font-style: italic; margin-top: 4px;">"<%= booking.reschedule_note %>"</div>
+                  <% end %>
+                  <div style="display: flex; gap: 8px; margin-top: 10px;">
+                    <%= button_to "✅ Yeni Saati Kabul Et", accept_reschedule_client_booking_path(booking.token), method: :patch, class: "btn btn-sm btn-primary", style: "background: #10b981; border-color: #10b981;" %>
+                    <%= button_to "❌ Reddet", reject_reschedule_client_booking_path(booking.token), method: :patch, class: "btn btn-sm btn-outline btn-danger" %>
+                  </div>
+                <% else %>
+                  <div style="font-size: 13px; color: #92400e;">
+                    ⏳ <strong>Tarih Değişikliği Talebiniz İnceleniyor:</strong> <%= booking.reschedule_starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y, %H:%M") %> (Ev sahibi onayı bekleniyor)
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+
+            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <div style="font-size: 13px; color: var(--color-text-secondary);">
+                Takip Sayfası: <%= link_to "whenly.app/b/#{booking.token}", booking_status_path(booking.token), target: "_blank", class: "btn-link" %>
+              </div>
+
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <%= link_to booking_ics_path(booking.token), class: "btn btn-sm btn-outline", style: "display: inline-flex; align-items: center; gap: 6px;" do %>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Takvime Ekle (.ics)
+                <% end %>
+
+                <% if booking.can_reschedule? %>
+                  <%= link_to "Tarih Değiştir", reschedule_client_booking_path(booking.token), class: "btn btn-sm btn-outline" %>
+                <% end %>
+
+                <%= button_to "Randevuyu İptal Et", cancel_client_booking_path(booking.token), method: :patch, class: "btn btn-sm btn-outline btn-danger", data: { turbo_confirm: "Randevunuzu iptal etmek istediğinize emin misiniz? Bu işlem geri alınamaz." } %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="card" style="text-align: center; padding: 48px 24px; color: var(--color-text-secondary);">
+        <div style="font-size: 40px; margin-bottom: 12px;">📅</div>
+        <p style="font-weight: 700; font-size: 16px; color: var(--color-text); margin: 0;">Yaklaşan onaylı randevunuz bulunmuyor</p>
+        <p style="font-size: 14px; margin-top: 6px;">Onaylanan veya anında kesinleşen randevularınız burada listelenir.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Sekme 2: Onay Bekleyen Randevular -->
+  <div data-tabs-target="panel" data-panel-name="pending" class="hidden">
+    <% if @pending.any? %>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <% @pending.each do |booking| %>
+          <div class="card" style="padding: 24px; border-left: 5px solid var(--color-warning);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                  <h3 style="font-size: 18px; font-weight: 700; color: var(--color-text); margin: 0;"><%= booking.event_type.name %></h3>
+                  <span class="badge badge-pending">Ev Sahibi Onayı Bekleniyor</span>
+                </div>
+                <div style="font-size: 14px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 8px;">
+                  <span>👤 Ev Sahibi: <strong style="color: var(--color-text);"><%= booking.user.name %></strong></span>
+                  <span>•</span>
+                  <span>⏱️ <%= booking.event_type.duration_minutes %> dakika</span>
+                </div>
+              </div>
+
+              <div style="text-align: right;">
+                <div style="font-size: 16px; font-weight: 700; color: var(--color-primary);">
+                  📅 <%= booking.starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y") %>
+                </div>
+                <div style="font-size: 14px; font-weight: 600; color: var(--color-text);">
+                  ⏰ <%= booking.starts_at.in_time_zone("Istanbul").strftime("%H:%M") %> - <%= booking.ends_at.in_time_zone("Istanbul").strftime("%H:%M") %>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 14px; padding: 12px 14px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; font-size: 13px; color: #92400e;">
+              ⏳ <strong>Bilgi:</strong> Ev sahibi bu randevu talebini onayladığında e-posta ve bu ekran üzerinden bilgilendirileceksiniz.
+            </div>
+
+            <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <div style="font-size: 13px; color: var(--color-text-secondary);">
+                Takip Sayfası: <%= link_to "whenly.app/b/#{booking.token}", booking_status_path(booking.token), target: "_blank", class: "btn-link" %>
+              </div>
+
+              <div>
+                <%= button_to "Talebi İptal Et", cancel_client_booking_path(booking.token), method: :patch, class: "btn btn-sm btn-outline btn-danger", data: { turbo_confirm: "Randevu talebinizi geri çekmek istediğinize emin misiniz?" } %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="card" style="text-align: center; padding: 48px 24px; color: var(--color-text-secondary);">
+        <div style="font-size: 40px; margin-bottom: 12px;">⏳</div>
+        <p style="font-weight: 700; font-size: 16px; color: var(--color-text); margin: 0;">Onay bekleyen randevu talebiniz bulunmuyor</p>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Sekme 3: Geçmiş Randevular -->
+  <div data-tabs-target="panel" data-panel-name="past" class="hidden">
+    <% if @past.any? %>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <% @past.each do |booking| %>
+          <div class="card" style="padding: 20px; opacity: 0.9;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                  <h3 style="font-size: 16px; font-weight: 700; color: var(--color-text); margin: 0;"><%= booking.event_type.name %></h3>
+                  <span class="badge badge-<%= booking.status %>">
+                    <%= case booking.status
+                        when "completed" then "Tamamlandı"
+                        when "no_show" then "Katılınmadı"
+                        when "declined" then "Ev Sahibi Reddetti"
+                        when "canceled" then "İptal Edildi"
+                        when "expired" then "Süresi Doldu"
+                        else booking.status
+                        end %>
+                  </span>
+                </div>
+                <div style="font-size: 13px; color: var(--color-text-secondary);">
+                  👤 Ev Sahibi: <strong><%= booking.user.name %></strong> • ⏱️ <%= booking.event_type.duration_minutes %> dk
+                </div>
+              </div>
+
+              <div style="text-align: right;">
+                <div style="font-size: 14px; font-weight: 600; color: var(--color-text);">
+                  <%= booking.starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y, %H:%M") %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="card" style="text-align: center; padding: 48px 24px; color: var(--color-text-secondary);">
+        <p style="font-weight: 700; font-size: 16px; color: var(--color-text); margin: 0;">Geçmiş randevu kaydı bulunmuyor</p>
+      </div>
+    <% end %>
+  </div>
+</div>

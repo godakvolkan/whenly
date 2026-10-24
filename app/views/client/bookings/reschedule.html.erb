@@ -1,0 +1,86 @@
+<div style="max-width: 800px; margin: 0 auto; padding: 20px 0;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 800; color: var(--color-text);">Tarih / Saat Değiştir (Reschedule)</h1>
+      <p style="font-size: 14px; color: var(--color-text-secondary); margin-top: 4px;">
+        <strong><%= @user.name %></strong> ile olan randevunuz için yeni bir tarih ve saat seçin.
+      </p>
+    </div>
+    <%= link_to "&larr; Panele Dön".html_safe, client_root_path, class: "btn btn-outline" %>
+  </div>
+
+  <div class="card" style="margin-bottom: 24px; background: #f8fafc; border: 1px solid var(--color-border);">
+    <div style="font-size: 13px; color: var(--color-text-secondary);">Şu Anki Randevunuz:</div>
+    <div style="font-size: 16px; font-weight: 700; color: var(--color-primary); margin-top: 2px;">
+      <%= @booking.starts_at.in_time_zone("Istanbul").strftime("%d %B %Y, %H:%M") %> &bull; <%= @event_type.name %> (<%= @event_type.duration_minutes %> dk)
+    </div>
+  </div>
+
+  <div class="card" data-controller="slot-select">
+    <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">1. Yeni Tarih Seçin</h3>
+
+    <div class="date-selector" style="margin-bottom: 24px;">
+      <% (0..13).each do |day_offset| %>
+        <% current_date = Date.current + day_offset.days %>
+        <% is_active = (current_date == @date) %>
+        <%= link_to reschedule_client_booking_path(@booking, date: current_date), class: "date-chip #{'active' if is_active}" do %>
+          <span class="day-name"><%= l(current_date, format: "%a") rescue current_date.strftime("%a") %></span>
+          <span class="day-num"><%= current_date.day %></span>
+        <% end %>
+      <% end %>
+    </div>
+
+    <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">
+      2. Müsait Saat Seçin (<%= l(@date, format: "%d %B %Y, %A") rescue @date.strftime("%d.%m.%Y") %>)
+    </h3>
+
+    <% if @slots.any? %>
+      <div class="slots-grid" style="margin-bottom: 24px;">
+        <% @slots.each do |slot| %>
+          <% time_str = slot[:starts_at].in_time_zone("Istanbul").strftime("%H:%M") %>
+          <% if slot[:available] %>
+            <button type="button"
+                    class="slot-btn"
+                    data-action="click->slot-select#select"
+                    data-starts-at="<%= slot[:starts_at].iso8601 %>"
+                    data-time-formatted="<%= time_str %>">
+              <span><%= time_str %></span>
+            </button>
+          <% else %>
+            <button type="button"
+                    class="slot-btn disabled"
+                    disabled
+                    title="Bu saat dilimi dolu">
+              <span style="text-decoration: line-through;"><%= time_str %></span>
+              <span class="slot-status-label">Dolu</span>
+            </button>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="empty-state" style="padding: 24px; text-align: center; color: var(--color-text-secondary);">
+        Bu tarihte uygun randevu saati bulunmuyor. Lütfen başka bir gün seçin.
+      </div>
+    <% end %>
+
+    <div class="card hidden" data-slot-select-target="form" style="background: var(--color-bg); border: 2px solid var(--color-primary); margin-top: 20px;">
+      <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">
+        Seçilen Saat: <span data-slot-select-target="selectedSlotTime" style="color: var(--color-primary);"></span>
+      </h3>
+
+      <%= form_with url: request_reschedule_client_booking_path(@booking), method: :patch, local: true do |f| %>
+        <%= f.hidden_field :starts_at, data: { "slot-select-target": "startsAt" } %>
+
+        <div class="form-group">
+          <%= f.label :reschedule_note, "Değişiklik Notunuz / Nedeniniz (İsteğe bağlı)", class: "form-label" %>
+          <%= f.text_area :reschedule_note, class: "form-control", rows: 2, placeholder: "Örn: Randevu saatini 1 saat ertelemek istiyorum..." %>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 16px;">
+          <%= f.submit "Tarih Değişikliği Talebini İlet", class: "btn btn-primary", style: "padding: 10px 20px;" %>
+          <%= link_to "Vazgeç", client_root_path, class: "btn btn-outline" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

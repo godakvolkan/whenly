@@ -4,6 +4,7 @@ export default class extends Controller {
   static values = {
     status: Object,
     daily: Object,
+    weekly: Object,
     busiestDay: Object,
     busiestHour: Object
   }
@@ -16,10 +17,47 @@ export default class extends Controller {
     Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, sans-serif"
     Chart.defaults.color = "#64748B"
 
+    this.renderWeeklyChart()
     this.renderStatusChart()
     this.renderDailyChart()
     this.renderDayChart()
     this.renderHourChart()
+  }
+
+  renderWeeklyChart() {
+    const ctx = this.element.querySelector("#weeklyChart")
+    if (!ctx) return
+
+    const data = this.weeklyValue || {}
+    new this.Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: Object.keys(data),
+        datasets: [{
+          label: "Haftalık Randevu",
+          data: Object.values(data),
+          backgroundColor: "rgba(79, 70, 229, 0.8)",
+          borderRadius: 8,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (context) => ` ${context.parsed.y} Randevu`
+            }
+          }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: "#E2E8F0" } },
+          x: { grid: { display: false } }
+        }
+      }
+    })
   }
 
   renderStatusChart() {

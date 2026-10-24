@@ -21,7 +21,8 @@ module Bookings
         invitee_name: @params[:invitee_name],
         invitee_email: normalized_email,
         starts_at: starts_at,
-        ends_at: ends_at
+        ends_at: ends_at,
+        notes: @params[:notes]
       )
 
       # 1. En az 2 saat önceden rezervasyon kuralı

@@ -1,0 +1,96 @@
+<div class="public-booking-layout">
+  <div class="booking-box">
+    <div class="booking-header">
+      <div class="host-name"><%= @user.name %></div>
+      <h1 class="booking-title">Randevu Tarih / Saat Değiştirme</h1>
+      <div class="booking-meta">
+        <span style="display: inline-flex; align-items: center; gap: 4px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <%= @event_type.name %> (<%= @event_type.duration_minutes %> dk)
+        </span>
+      </div>
+      <div style="margin-top: 12px; padding: 10px 14px; background: rgba(99, 102, 241, 0.08); border-radius: 8px; font-size: 13.5px; color: var(--color-primary); font-weight: 500;">
+        📅 <strong>Mevcut Randevu:</strong> <%= @booking.starts_at.in_time_zone("Istanbul").strftime("%d %B %Y, %H:%M") %>
+      </div>
+    </div>
+
+    <% if flash[:alert] %>
+      <div class="flash flash-alert" style="margin: 16px;">
+        <span><%= flash[:alert] %></span>
+      </div>
+    <% end %>
+
+    <div class="booking-body" data-controller="slot-select">
+      <h3 style="margin-bottom: 12px; font-size: 1.05rem;">Yeni Tarih Seçin</h3>
+      
+      <div class="date-selector">
+        <% (0..13).each do |day_offset| %>
+          <% current_date = Date.current + day_offset.days %>
+          <% is_active = (current_date == @date) %>
+          <%= link_to reschedule_booking_path(@booking.token, date: current_date), class: "date-chip #{'active' if is_active}" do %>
+            <span class="day-name"><%= l(current_date, format: "%a") rescue current_date.strftime("%a") %></span>
+            <span class="day-num"><%= current_date.day %></span>
+          <% end %>
+        <% end %>
+      </div>
+
+      <h3 style="margin-bottom: 12px; font-size: 1.05rem;">
+        Uygun Saatler (<%= l(@date, format: "%d %B %Y, %A") rescue @date.strftime("%d.%m.%Y") %>)
+      </h3>
+
+      <% if @slots.any? %>
+        <div class="slots-grid">
+          <% @slots.each do |slot| %>
+            <% time_str = slot[:starts_at].in_time_zone("Istanbul").strftime("%H:%M") %>
+            <% if slot[:available] %>
+              <button type="button"
+                      class="slot-btn"
+                      data-action="click->slot-select#select"
+                      data-starts-at="<%= slot[:starts_at].iso8601 %>"
+                      data-time-formatted="<%= time_str %>">
+                <span><%= time_str %></span>
+              </button>
+            <% else %>
+              <button type="button"
+                      class="slot-btn disabled"
+                      disabled
+                      title="Bu saat dilimi dolu veya uygun değil">
+                <span style="text-decoration: line-through;"><%= time_str %></span>
+                <span class="slot-status-label">Dolu</span>
+              </button>
+            <% end %>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="empty-state card" style="margin-bottom: 24px;">
+          <p>Bu tarihte uygun saat dilimi bulunmuyor.</p>
+          <p style="font-size: 0.85rem; margin-top: 4px;">Lütfen yukarıdan başka bir gün seçiniz.</p>
+        </div>
+      <% end %>
+
+      <div class="card hidden" data-slot-select-target="form" style="background: var(--color-bg); border: 2px solid var(--color-primary); margin-top: 20px;">
+        <h3 style="margin-bottom: 16px;">
+          Yeni Saat Onayı: <span data-slot-select-target="selectedSlotTime" style="color: var(--color-primary); font-weight: 700;"></span>
+        </h3>
+
+        <%= form_with url: submit_reschedule_booking_path(@booking.token), method: :patch, local: true do |f| %>
+          <%= f.hidden_field :starts_at, data: { "slot-select-target": "startsAt" } %>
+
+          <div class="form-group">
+            <%= f.label :reschedule_note, "Değişiklik Talebi Notu / Açıklama (İsteğe bağlı)", class: "form-label" %>
+            <%= f.text_area :reschedule_note, class: "form-control", rows: 2, placeholder: "Örn: İş toplantım uzadığı için 1 saat sonrasını talep ediyorum..." %>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 16px;">
+            <%= f.submit "Tarih Değişikliği Talebini İlet", class: "btn btn-primary", style: "flex: 1; padding: 12px;" %>
+            <%= link_to "Vazgeç", booking_status_path(@booking.token), class: "btn btn-outline", style: "padding: 12px 20px;" %>
+          </div>
+        <% end %>
+      </div>
+
+      <div style="margin-top: 24px; text-align: center;">
+        <%= link_to "&larr; Randevu Detayına Geri Dön".html_safe, booking_status_path(@booking.token), style: "font-size: 13px; color: var(--color-text-secondary); text-decoration: none;" %>
+      </div>
+    </div>
+  </div>
+</div>

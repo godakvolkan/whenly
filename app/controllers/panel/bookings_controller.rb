@@ -1,5 +1,5 @@
 class Panel::BookingsController < Panel::BaseController
-  before_action :set_booking, only: [:show, :confirm, :decline, :cancel, :expire, :complete, :no_show]
+  before_action :set_booking, only: [:show, :confirm, :decline, :cancel, :expire, :complete, :no_show, :reschedule, :request_reschedule, :accept_reschedule, :reject_reschedule]
 
   def index
     redirect_to panel_root_path
@@ -41,6 +41,49 @@ class Panel::BookingsController < Panel::BaseController
       transition_booking(:no_show!, "Randevu gelmedi (no-show) olarak işaretlendi.")
     else
       redirect_back fallback_location: panel_root_path, alert: "Toplantı bitişinden en az 15 dakika sonra gelmedi olarak işaretlenebilir."
+    end
+  end
+
+  def reschedule
+    unless @booking.can_reschedule?
+      return redirect_back fallback_location: panel_root_path, alert: "Bu randevu için şu an tarih değişikliği yapılamaz."
+    end
+    @user = current_user
+    @event_type = @booking.event_type
+    @date = params[:date].present? ? (Date.parse(params[:date]) rescue Date.current) : Date.current
+    @slots = SlotFinder.new(@user, @event_type, @date).all_slots
+  end
+
+  def request_reschedule
+    begin
+      @booking.request_reschedule!(
+        starts_at: params[:starts_at],
+        by: "host",
+        note: params[:reschedule_note]
+      )
+      redirect_to panel_root_path, notice: "Tarih değişikliği teklifiniz danışana iletildi. Danışan onayladığında randevu güncellenecektir."
+    rescue Booking::InvalidTransition => e
+      redirect_back fallback_location: panel_root_path, alert: e.message
+    end
+  end
+
+  def accept_reschedule
+    begin
+      @booking.accept_reschedule!
+      TelegramNotifyJob.perform_later(@booking.id, "reschedule_accepted") rescue nil
+      redirect_back fallback_location: panel_root_path, notice: "Danışanın talep ettiği yeni tarih onaylandı ve randevu saati güncellendi."
+    rescue Booking::InvalidTransition => e
+      redirect_back fallback_location: panel_root_path, alert: e.message
+    end
+  end
+
+  def reject_reschedule
+    begin
+      @booking.reject_reschedule!
+      TelegramNotifyJob.perform_later(@booking.id, "reschedule_rejected") rescue nil
+      redirect_back fallback_location: panel_root_path, notice: "Tarih değişikliği talebi reddedildi. Mevcut randevu korunuyor."
+    rescue Booking::InvalidTransition => e
+      redirect_back fallback_location: panel_root_path, alert: e.message
     end
   end
 

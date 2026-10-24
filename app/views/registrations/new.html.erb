@@ -1,0 +1,102 @@
+<div class="auth-page-wrapper">
+  <div class="auth-card" style="max-width: 520px;">
+    <!-- Logo ve Başlık -->
+    <div class="auth-header">
+      <div class="auth-logo-badge">
+        <img src="/icon.svg" width="36" height="36" alt="Whenly">
+      </div>
+      <h1 class="auth-title">Whenly Hesabı Oluşturun</h1>
+      <p class="auth-subtitle">Saniyeler içinde kayıt olun, randevularınızı hemen planlayın</p>
+    </div>
+
+    <!-- Giriş / Kayıt Geçiş Sekmeleri -->
+    <div class="auth-tabs">
+      <%= link_to "Giriş Yap", login_path, class: "auth-tab" %>
+      <%= link_to "Kayıt Ol", signup_path, class: "auth-tab active" %>
+    </div>
+
+    <% if @user.errors.any? %>
+      <div class="auth-alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <div>
+          <div style="font-weight: 700; margin-bottom: 4px;">Lütfen formu kontrol edin:</div>
+          <ul style="margin: 0; padding-left: 18px; font-size: 13px;">
+            <% @user.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Kayıt Formu -->
+    <%= form_with model: @user, url: registration_path, local: true, class: "auth-form" do |form| %>
+      <!-- Rol Seçimi Kartları -->
+      <div class="form-group">
+        <label class="auth-label">Hesap Türünüzü Seçin</label>
+        <div class="role-selector-grid">
+          <label class="role-card">
+            <%= form.radio_button :role, "host", class: "role-radio", checked: (@user.role == "host" || params[:role] == "host") %>
+            <div class="role-card-content">
+              <div class="role-card-icon">👔</div>
+              <div class="role-card-title">Ev Sahibi / Uzman</div>
+              <div class="role-card-desc">Randevu takvimi oluşturup paylaşmak istiyorum</div>
+            </div>
+          </label>
+
+          <label class="role-card">
+            <%= form.radio_button :role, "client", class: "role-radio", checked: (@user.role == "client" || params[:role] == "client" || params[:role].blank?) %>
+            <div class="role-card-content">
+              <div class="role-card-icon">👤</div>
+              <div class="role-card-title">Danışan / Katılımcı</div>
+              <div class="role-card-desc">Randevu alıp randevularımı takip etmek istiyorum</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :name, "Adınız Soyadınız", class: "auth-label" %>
+        <div class="input-with-icon">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <%= form.text_field :name, required: true, autofocus: true, placeholder: "Örn: Canan Dağdeviren", class: "auth-input" %>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :email_address, "E-Posta Adresi", class: "auth-label" %>
+        <div class="input-with-icon">
+          <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+          <%= form.email_field :email_address, required: true, autocomplete: "email", placeholder: "adiniz@ornek.com", class: "auth-input" %>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="form-group">
+          <%= form.label :password, "Şifre", class: "auth-label" %>
+          <div class="input-with-icon">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <%= form.password_field :password, required: true, autocomplete: "new-password", placeholder: "••••••••", maxlength: 72, class: "auth-input" %>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :password_confirmation, "Şifre Tekrarı", class: "auth-label" %>
+          <div class="input-with-icon">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", placeholder: "••••••••", maxlength: 72, class: "auth-input" %>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 24px;">
+        <%= form.submit "Hesabımı Oluştur & Giriş Yap", class: "auth-btn-primary" %>
+      </div>
+    <% end %>
+
+    <div class="auth-footer">
+      <span>Zaten bir hesabınız var mı?</span>
+      <%= link_to "Giriş Yapın", login_path, class: "auth-link-bold" %>
+    </div>
+  </div>
+</div>

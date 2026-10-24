@@ -142,4 +142,56 @@ class BookingTest < ActiveSupport::TestCase
     )
     assert_equal "buyuk_harf@example.com", b.invitee_email
   end
+
+  test "supports notes when creating booking" do
+    b = Booking.create!(
+      user: @user,
+      event_type: @event_type,
+      invitee_name: "Not Bırakan Davetli",
+      invitee_email: "not@example.com",
+      starts_at: 3.days.from_now.change(hour: 10, min: 0),
+      ends_at: 3.days.from_now.change(hour: 10, min: 30),
+      notes: "Görüşmede yeni proje mimarisini değerlendirmek istiyorum."
+    )
+    assert_equal "Görüşmede yeni proje mimarisini değerlendirmek istiyorum.", b.reload.notes
+  end
+
+  test "reschedule lifecycle: request, accept and reject" do
+    # Ensure user has availability rule for the day
+    new_starts = 4.days.from_now.change(hour: 11, min: 0)
+    @user.availability_rules.find_or_create_by!(day_of_week: new_starts.in_time_zone("Istanbul").to_date.cwday) do |r|
+      r.start_time = "09:00"
+      r.end_time = "18:00"
+    end
+
+    assert @booking.can_reschedule?
+    assert_not @booking.reschedule_pending?
+
+    # 1. Request reschedule
+    @booking.request_reschedule!(starts_at: new_starts, by: "client", note: "İşim çıktı")
+    assert @booking.reschedule_pending?
+    assert_equal "client", @booking.rescheduled_by
+    assert_equal new_starts, @booking.reschedule_starts_at
+    assert_equal "İşim çıktı", @booking.reschedule_note
+
+    # 2. Accept reschedule
+    @booking.accept_reschedule!
+    assert_equal "accepted", @booking.reschedule_status
+    assert_equal new_starts, @booking.starts_at
+    assert_equal "confirmed", @booking.status
+
+    # 3. Request again and reject
+    another_slot = 5.days.from_now.change(hour: 15, min: 0)
+    @user.availability_rules.find_or_create_by!(day_of_week: another_slot.in_time_zone("Istanbul").to_date.cwday) do |r|
+      r.start_time = "09:00"
+      r.end_time = "18:00"
+    end
+
+    @booking.request_reschedule!(starts_at: another_slot, by: "host", note: "Doktor başka bir saat önerdi")
+    assert @booking.reschedule_pending?
+
+    @booking.reject_reschedule!
+    assert_equal "rejected", @booking.reschedule_status
+    assert_equal new_starts, @booking.starts_at # original slot maintained
+  end
 end

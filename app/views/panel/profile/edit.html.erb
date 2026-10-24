@@ -1,0 +1,138 @@
+<div style="max-width: 760px; margin: 0 auto;">
+  <div style="margin-bottom: 28px;">
+    <h1 style="font-size: 26px; font-weight: 800; color: var(--color-text); margin: 0;">Profil ve Hesap Ayarları</h1>
+    <p style="font-size: 14px; color: var(--color-text-secondary); margin-top: 6px;">
+      Adınızı, rezervasyon sayfanızın URL adresini (slug) ve giriş şifrenizi güncelleyin.
+    </p>
+  </div>
+
+  <% if @user.errors.any? %>
+    <div class="flash flash-alert" style="margin-bottom: 24px;">
+      <div>
+        <strong>Lütfen aşağıdaki hataları düzeltin:</strong>
+        <ul style="margin: 6px 0 0 16px; padding: 0;">
+          <% @user.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Canlı Rezervasyon Bağlantısı Önizleme -->
+  <div class="card" style="margin-bottom: 24px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%); border: 1.5px solid rgba(99, 102, 241, 0.2);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-primary);">Herkese Açık Rezervasyon Bağlantınız</div>
+        <div style="font-size: 16px; font-weight: 700; color: var(--color-text); margin-top: 4px; word-break: break-all;">
+          <%= request.base_url %>/<span style="color: var(--color-primary);"><%= @user.slug %></span>/<%= @user.event_types.first&.slug || 'randevu-turu' %>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <%= link_to "/#{@user.slug}/#{@user.event_types.first&.slug}", target: "_blank", class: "btn btn-sm btn-outline", style: "display: inline-flex; align-items: center; gap: 6px;" do %>
+          <span>Görüntüle</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+        <% end if @user.event_types.any? %>
+      </div>
+    </div>
+  </div>
+
+  <%= form_with model: @user, url: panel_profile_path, method: :patch, local: true do |f| %>
+    <!-- 1. Kişisel Bilgiler -->
+    <div class="card" style="margin-bottom: 24px;">
+      <h3 style="font-size: 17px; font-weight: 700; color: var(--color-text); margin: 0 0 20px 0; display: flex; align-items: center; gap: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        Profil Bilgileri
+      </h3>
+
+      <div class="form-group" style="margin-bottom: 18px;">
+        <%= f.label :name, "Adınız ve Soyadınız", class: "form-label" %>
+        <%= f.text_field :name, class: "form-control", placeholder: "Volkan Godak", required: true %>
+        <div class="form-help" style="font-size: 12.5px; color: var(--color-text-secondary); margin-top: 4px;">
+          Davetlilerin randevu alırken gördüğü uzman/hekim adınız.
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 18px;">
+        <%= f.label :slug, "Kişisel Sayfa Adresi (Slug / Kullanıcı Adı)", class: "form-label" %>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 14px; color: var(--color-text-secondary); font-weight: 600; white-space: nowrap;">
+            <%= request.base_url %>/
+          </span>
+          <%= f.text_field :slug, class: "form-control", placeholder: "volkan", required: true, style: "font-weight: 600; color: var(--color-primary);" %>
+        </div>
+        <div class="form-help" style="font-size: 12.5px; color: var(--color-text-secondary); margin-top: 4px;">
+          Yalnızca küçük harfler, rakamlar ve tire (-) içerebilir.
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">E-posta Adresi</label>
+        <input type="text" class="form-control" value="<%= @user.email_address %>" disabled style="background: #f1f5f9; cursor: not-allowed; color: #64748b;">
+        <div class="form-help" style="font-size: 12.5px; color: var(--color-text-secondary); margin-top: 4px;">
+          E-posta adresi hesap güvenliği ve bildirimler için sabittir.
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Şifre Değiştirme -->
+    <div class="card" style="margin-bottom: 24px;">
+      <h3 style="font-size: 17px; font-weight: 700; color: var(--color-text); margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        Şifre Değiştir
+      </h3>
+      <p style="font-size: 13px; color: var(--color-text-secondary); margin-top: 0; margin-bottom: 18px;">
+        Şifrenizi değiştirmek istemiyorsanız bu alanları boş bırakabilirsiniz.
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <%= f.label :password, "Yeni Şifre", class: "form-label" %>
+          <%= f.password_field :password, class: "form-control", placeholder: "En az 6 karakter", autocomplete: "new-password" %>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <%= f.label :password_confirmation, "Yeni Şifre Tekrar", class: "form-label" %>
+          <%= f.password_field :password_confirmation, class: "form-control", placeholder: "Yeni şifrenizi tekrar girin", autocomplete: "new-password" %>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Telegram Bağlantısı -->
+    <div class="card" style="margin-bottom: 28px;">
+      <h3 style="font-size: 17px; font-weight: 700; color: var(--color-text); margin: 0 0 14px 0; display: flex; align-items: center; gap: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        Telegram Bildirim ve Yönetim Botu
+      </h3>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <% if @user.telegram_chat_id.present? %>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="badge badge-confirmed" style="background: #10b981; color: white;">✅ Telegram Bağlı</span>
+              <span style="font-size: 13px; color: var(--color-text-secondary); font-family: monospace;">Chat ID: <%= @user.telegram_chat_id %></span>
+            </div>
+            <p style="font-size: 13px; color: var(--color-text-secondary); margin: 6px 0 0 0;">
+              Yeni randevu bildirimleri ve tarih değişikliği talepleri anında Telegram hesabınıza gönderilir.
+            </p>
+          <% else %>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="badge badge-warning">⚠️ Henüz Bağlanmadı</span>
+            </div>
+            <p style="font-size: 13px; color: var(--color-text-secondary); margin: 6px 0 0 0;">
+              Telegram botumuz <strong>@whenly_slot_bot</strong> üzerinden <code>/bagla <%= @user.email_address %></code> yazarak hesabınızı anında bağlayabilirsiniz.
+            </p>
+          <% end %>
+        </div>
+        <a href="https://t.me/whenly_slot_bot" target="_blank" class="btn btn-sm btn-outline" style="white-space: nowrap;">
+          Telegram Botunu Aç &rarr;
+        </a>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px;">
+      <%= link_to "Vazgeç", panel_root_path, class: "btn btn-outline", style: "padding: 12px 24px;" %>
+      <%= f.submit "Değişiklikleri Kaydet", class: "btn btn-primary", style: "padding: 12px 28px;" %>
+    </div>
+  <% end %>
+</div>

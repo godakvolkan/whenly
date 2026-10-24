@@ -83,6 +83,11 @@
             <div class="form-help">Rezervasyon oluşturulduğunda takip ve durum ekranınız anında açılacaktır.</div>
           </div>
 
+          <div class="form-group">
+            <%= f.label :notes, "Randevu Notu / Açıklaması (İsteğe bağlı)", class: "form-label" %>
+            <%= f.text_area :notes, class: "form-control", rows: 3, placeholder: "Görüşme konusu, paylaşmak istediğiniz detaylar veya özel bir notunuz..." %>
+          </div>
+
           <%= f.submit "Randevuyu Onayla", class: "btn btn-primary", style: "width: 100%; padding: 12px;" %>
         <% end %>
       </div>

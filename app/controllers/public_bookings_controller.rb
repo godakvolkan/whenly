@@ -58,10 +58,59 @@ class PublicBookingsController < ApplicationController
     end
   end
 
+  def reschedule_form
+    @booking = Booking.find_by!(token: params[:token])
+    unless @booking.can_reschedule?
+      return redirect_to booking_status_path(@booking.token), alert: "Bu randevu için şu an tarih değişikliği yapılamaz."
+    end
+
+    @user = @booking.user
+    @event_type = @booking.event_type
+    @date = params[:date].present? ? (Date.parse(params[:date]) rescue Date.current) : Date.current
+    @slots = SlotFinder.new(@user, @event_type, @date).all_slots
+  end
+
+  def request_reschedule
+    @booking = Booking.find_by!(token: params[:token])
+    begin
+      @booking.request_reschedule!(
+        starts_at: params[:starts_at],
+        by: "client",
+        note: params[:reschedule_note]
+      )
+      TelegramNotifyJob.perform_later(@booking.id, "reschedule_requested") rescue nil
+      redirect_to booking_status_path(@booking.token), notice: "Tarih değişikliği talebiniz iletildi. Ev sahibi onayladığında randevunuz güncellenecektir."
+    rescue Booking::InvalidTransition => e
+      redirect_to reschedule_booking_path(@booking.token), alert: e.message
+    end
+  end
+
+  def accept_reschedule
+    @booking = Booking.find_by!(token: params[:token])
+    begin
+      @booking.accept_reschedule!
+      TelegramNotifyJob.perform_later(@booking.id, "reschedule_accepted") rescue nil
+      redirect_to booking_status_path(@booking.token), notice: "Yeni randevu saati başarıyla onaylandı ve randevunuz güncellendi."
+    rescue Booking::InvalidTransition => e
+      redirect_to booking_status_path(@booking.token), alert: e.message
+    end
+  end
+
+  def reject_reschedule
+    @booking = Booking.find_by!(token: params[:token])
+    begin
+      @booking.reject_reschedule!
+      TelegramNotifyJob.perform_later(@booking.id, "reschedule_rejected") rescue nil
+      redirect_to booking_status_path(@booking.token), notice: "Tarih değişikliği teklifi reddedildi. Mevcut randevunuz korunuyor."
+    rescue Booking::InvalidTransition => e
+      redirect_to booking_status_path(@booking.token), alert: e.message
+    end
+  end
+
   private
 
   def booking_params
-    params.require(:booking).permit(:invitee_name, :invitee_email, :starts_at)
+    params.require(:booking).permit(:invitee_name, :invitee_email, :starts_at, :notes)
   end
 
   def booking_not_found

@@ -12,6 +12,19 @@
     </div>
   </div>
 
+  <% if @reschedule_pending_count > 0 %>
+    <div style="margin-bottom: 24px; padding: 14px 18px; background: #fffbeb; border: 1.5px solid #f59e0b; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 24px;">🔔</span>
+        <div>
+          <strong style="color: #b45309; font-size: 14.5px;">Onay Bekleyen Tarih Değişikliği Talepleri!</strong>
+          <p style="margin: 2px 0 0 0; font-size: 13px; color: #78350f;">Danışanlar tarafından iletilen <strong><%= @reschedule_pending_count %></strong> adet randevu saati değişikliği onayınızı bekliyor.</p>
+        </div>
+      </div>
+      <button type="button" class="btn btn-sm btn-primary" onclick="document.querySelector('[data-tab-target=\'pending\']').click()" style="background: #f59e0b; border-color: #f59e0b;">Talepleri İncele</button>
+    </div>
+  <% end %>
+
   <!-- İstatistik Kartları -->
   <div class="stats-grid">
     <div class="stat-card">
@@ -24,21 +37,12 @@
       </div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background: var(--color-warning-light); color: var(--color-warning);">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-      </div>
-      <div>
-        <div class="stat-value"><%= @pending_count %></div>
-        <div class="stat-label">Bekleyen</div>
-      </div>
-    </div>
-    <div class="stat-card">
       <div class="stat-icon" style="background: var(--color-success-light); color: var(--color-success);">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
       </div>
       <div>
-        <div class="stat-value"><%= @confirmed_count + @completed_count %></div>
-        <div class="stat-label">Onaylı / Tamamlanan</div>
+        <div class="stat-value"><%= @approval_rate %>%</div>
+        <div class="stat-label">Onay Oranı</div>
       </div>
     </div>
     <div class="stat-card">
@@ -48,6 +52,15 @@
       <div>
         <div class="stat-value"><%= @no_show_rate %>%</div>
         <div class="stat-label">No-Show Oranı</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background: var(--color-warning-light); color: var(--color-warning);">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      </div>
+      <div>
+        <div class="stat-value"><%= @pending_count %></div>
+        <div class="stat-label">Onay Bekleyen</div>
       </div>
     </div>
   </div>
@@ -120,13 +133,45 @@
             <% end %>
           </div>
 
+          <% if booking.notes.present? %>
+            <div style="margin: 0 16px 12px 16px; padding: 10px 14px; background: rgba(99, 102, 241, 0.05); border-left: 3px solid var(--color-primary); border-radius: 6px; font-size: 13px;">
+              <strong>📝 Davetli Notu:</strong> <%= booking.notes %>
+            </div>
+          <% end %>
+
+          <% if booking.reschedule_pending? %>
+            <div style="margin: 0 16px 12px 16px; padding: 12px 16px; background: #fffbeb; border: 1.5px solid #f59e0b; border-radius: 8px;">
+              <% if booking.rescheduled_by == "client" %>
+                <div style="font-weight: 700; color: #b45309; font-size: 13.5px;">🔄 Danışan Tarih Değişikliği Talep Etti:</div>
+                <div style="font-size: 13.5px; color: #78350f; margin-top: 2px;">
+                  <strong>Talep Edilen:</strong> <%= booking.reschedule_starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y, %H:%M") %> - <%= booking.reschedule_ends_at.in_time_zone("Istanbul").strftime("%H:%M") %>
+                </div>
+                <% if booking.reschedule_note.present? %>
+                  <div style="font-size: 12.5px; color: #92400e; font-style: italic; margin-top: 4px;">"<%= booking.reschedule_note %>"</div>
+                <% end %>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                  <%= button_to "✅ Yeni Saati Onayla", accept_reschedule_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-success" %>
+                  <%= button_to "❌ Talebi Reddet", reject_reschedule_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-danger" %>
+                  <%= link_to "Farklı Saat Öner", reschedule_panel_booking_path(booking), class: "btn btn-sm btn-outline" %>
+                </div>
+              <% else %>
+                <div style="font-size: 13px; color: #1e40af;">
+                  ⏳ <strong>Yeni Tarih Teklifiniz İletildi:</strong> <%= booking.reschedule_starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y, %H:%M") %> (Danışanın yanıtı bekleniyor)
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+
           <div class="booking-card-actions">
             <div style="font-size: 13px; color: var(--color-text-secondary);">
               Davetli Bağlantısı: <%= link_to "/b/#{booking.token}", booking_status_path(booking.token), target: "_blank", class: "btn-link" %>
             </div>
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
               <%= button_to "Onayla", confirm_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-success" %>
               <%= button_to "Reddet", decline_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-danger", data: { turbo_confirm: "Bu randevu talebini reddetmek istediğinize emin misiniz?" } %>
+              <% if booking.can_reschedule? %>
+                <%= link_to "Tarih Değiştir", reschedule_panel_booking_path(booking), class: "btn btn-sm btn-outline" %>
+              <% end %>
               <%= button_to "Süreyi Doldur (Simüle Et)", expire_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-outline", style: "border-color: #F59E0B; color: #D97706;", title: "SLA süresi dolmuş gibi randevuyu otomatik düşürür ve saati açar" %>
             </div>
           </div>
@@ -177,11 +222,43 @@
             </div>
           </div>
 
+          <% if booking.notes.present? %>
+            <div style="margin: 0 16px 12px 16px; padding: 10px 14px; background: rgba(99, 102, 241, 0.05); border-left: 3px solid var(--color-primary); border-radius: 6px; font-size: 13px;">
+              <strong>📝 Davetli Notu:</strong> <%= booking.notes %>
+            </div>
+          <% end %>
+
+          <% if booking.reschedule_pending? %>
+            <div style="margin: 0 16px 12px 16px; padding: 12px 16px; background: #fffbeb; border: 1.5px solid #f59e0b; border-radius: 8px;">
+              <% if booking.rescheduled_by == "client" %>
+                <div style="font-weight: 700; color: #b45309; font-size: 13.5px;">🔄 Danışan Tarih Değişikliği Talep Etti:</div>
+                <div style="font-size: 13.5px; color: #78350f; margin-top: 2px;">
+                  <strong>Talep Edilen:</strong> <%= booking.reschedule_starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y, %H:%M") %> - <%= booking.reschedule_ends_at.in_time_zone("Istanbul").strftime("%H:%M") %>
+                </div>
+                <% if booking.reschedule_note.present? %>
+                  <div style="font-size: 12.5px; color: #92400e; font-style: italic; margin-top: 4px;">"<%= booking.reschedule_note %>"</div>
+                <% end %>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                  <%= button_to "✅ Yeni Saati Onayla", accept_reschedule_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-success" %>
+                  <%= button_to "❌ Talebi Reddet", reject_reschedule_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-danger" %>
+                  <%= link_to "Farklı Saat Öner", reschedule_panel_booking_path(booking), class: "btn btn-sm btn-outline" %>
+                </div>
+              <% else %>
+                <div style="font-size: 13px; color: #1e40af;">
+                  ⏳ <strong>Yeni Tarih Teklifiniz İletildi:</strong> <%= booking.reschedule_starts_at.in_time_zone("Istanbul").strftime("%d.%m.%Y, %H:%M") %> (Danışanın yanıtı bekleniyor)
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+
           <div class="booking-card-actions">
             <div style="font-size: 13px; color: var(--color-text-secondary);">
               Davetli Bağlantısı: <%= link_to "/b/#{booking.token}", booking_status_path(booking.token), target: "_blank", class: "btn-link" %>
             </div>
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <% if booking.can_reschedule? %>
+                <%= link_to "Tarih Değiştir", reschedule_panel_booking_path(booking), class: "btn btn-sm btn-outline" %>
+              <% end %>
               <%= button_to "Tamamlandı Olarak İşaretle", complete_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-outline" %>
               <%= button_to "İptal Et", cancel_panel_booking_path(booking), method: :patch, class: "btn btn-sm btn-outline btn-danger", data: { turbo_confirm: "Randevuyu iptal etmek istediğinize emin misiniz?" } %>
             </div>
@@ -256,12 +333,23 @@
   <!-- Sekme 4: İstatistikler -->
   <div data-tabs-target="panel" data-panel-name="stats" class="hidden"
        data-controller="charts"
+       data-charts-weekly-value="<%= @weekly_data.to_json %>"
        data-charts-status-value="<%= @status_data.to_json %>"
        data-charts-daily-value="<%= @daily_data.to_json %>"
        data-charts-busiest-day-value="<%= @busiest_day_data.to_json %>"
        data-charts-busiest-hour-value="<%= @busiest_hour_data.to_json %>">
 
     <div class="charts-grid">
+      <div class="chart-card" style="grid-column: 1 / -1;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 class="chart-title" style="margin: 0;">📅 Haftalık Randevu Dağılım Grafiği (Son 7 Gün)</h3>
+          <span style="font-size: 12px; font-weight: 600; color: var(--color-primary); background: rgba(99, 102, 241, 0.1); padding: 4px 10px; border-radius: 20px;">Haftalık Trend</span>
+        </div>
+        <div style="height: 280px; position: relative;">
+          <canvas id="weeklyChart"></canvas>
+        </div>
+      </div>
+
       <div class="chart-card">
         <h3 class="chart-title">Durum Dağılımı</h3>
         <div style="height: 280px; position: relative;">

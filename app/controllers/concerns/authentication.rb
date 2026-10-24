@@ -35,7 +35,14 @@ module Authentication
     end
 
     def after_authentication_url
-      session.delete(:return_to_after_authenticating) || root_url
+      return_to = session.delete(:return_to_after_authenticating)
+      return return_to if return_to.present?
+
+      if Current.user&.client?
+        client_root_path
+      else
+        panel_root_path
+      end
     end
 
     def start_new_session_for(user)
