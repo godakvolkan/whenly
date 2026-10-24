@@ -10,23 +10,35 @@ export default class extends Controller {
   }
 
   async connect() {
-    const { Chart, registerables } = await import("chart.js")
-    Chart.register(...registerables)
-    this.Chart = Chart
+    try {
+      const chartModule = await import("chart.js")
+      const Chart = chartModule.Chart || chartModule.default || window.Chart
+      if (chartModule.registerables && typeof Chart.register === "function") {
+        Chart.register(...chartModule.registerables)
+      }
+      this.Chart = Chart
 
-    Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, sans-serif"
-    Chart.defaults.color = "#64748B"
+      if (this.Chart) {
+        if (this.Chart.defaults) {
+          this.Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, sans-serif"
+          this.Chart.defaults.color = "#64748B"
+        }
 
-    this.renderWeeklyChart()
-    this.renderStatusChart()
-    this.renderDailyChart()
-    this.renderDayChart()
-    this.renderHourChart()
+        this.renderWeeklyChart()
+        this.renderStatusChart()
+        this.renderDailyChart()
+        this.renderDayChart()
+        this.renderHourChart()
+      }
+    } catch (err) {
+      console.warn("Chart.js yüklenemedi veya grafik render edilirken hata:", err)
+    }
   }
 
   renderWeeklyChart() {
     const ctx = this.element.querySelector("#weeklyChart")
-    if (!ctx) return
+    if (!ctx || !this.Chart) return
+    this.Chart.getChart?.(ctx)?.destroy()
 
     const data = this.weeklyValue || {}
     new this.Chart(ctx, {
@@ -62,9 +74,10 @@ export default class extends Controller {
 
   renderStatusChart() {
     const ctx = this.element.querySelector("#statusChart")
-    if (!ctx) return
+    if (!ctx || !this.Chart) return
+    this.Chart.getChart?.(ctx)?.destroy()
 
-    const data = this.statusValue
+    const data = this.statusValue || {}
     const labels = Object.keys(data)
     const values = Object.values(data)
     const colors = ["#059669", "#D97706", "#4F46E5", "#DC2626", "#6366F1", "#94A3B8", "#F59E0B"]
@@ -88,9 +101,10 @@ export default class extends Controller {
 
   renderDailyChart() {
     const ctx = this.element.querySelector("#dailyChart")
-    if (!ctx) return
+    if (!ctx || !this.Chart) return
+    this.Chart.getChart?.(ctx)?.destroy()
 
-    const data = this.dailyValue
+    const data = this.dailyValue || {}
     new this.Chart(ctx, {
       type: "bar",
       data: {
@@ -117,9 +131,10 @@ export default class extends Controller {
 
   renderDayChart() {
     const ctx = this.element.querySelector("#dayChart")
-    if (!ctx) return
+    if (!ctx || !this.Chart) return
+    this.Chart.getChart?.(ctx)?.destroy()
 
-    const data = this.busiestDayValue
+    const data = this.busiestDayValue || {}
     new this.Chart(ctx, {
       type: "bar",
       data: {
@@ -146,9 +161,10 @@ export default class extends Controller {
 
   renderHourChart() {
     const ctx = this.element.querySelector("#hourChart")
-    if (!ctx) return
+    if (!ctx || !this.Chart) return
+    this.Chart.getChart?.(ctx)?.destroy()
 
-    const data = this.busiestHourValue
+    const data = this.busiestHourValue || {}
     new this.Chart(ctx, {
       type: "line",
       data: {
