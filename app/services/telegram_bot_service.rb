@@ -227,7 +227,7 @@ class TelegramBotService
   end
 
   def start_booking_flow(chat_id, session)
-    hosts = User.all
+    hosts = User.where(role: "host")
     if hosts.empty?
       send_text(chat_id, t(session, :no_host))
       return
@@ -407,7 +407,7 @@ class TelegramBotService
     lower = text.downcase.gsub(/[İı]/, "i")
 
     if lower.match?(/randevu|rezervasyon|yer\s*var|müsait|boş|saat/)
-      host = User.first
+      host = User.where(role: "host").first
       return send_text(chat_id, "Kayıtlı ev sahibi yok.") unless host
 
       et = if lower.match?(/mentorluk|mentor/)
