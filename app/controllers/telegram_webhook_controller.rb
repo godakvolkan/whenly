@@ -14,10 +14,11 @@ class TelegramWebhookController < ApplicationController
     elsif update.callback_query
       service.handle_callback(update.callback_query)
     end
+
+    head :ok
   rescue StandardError => e
     Rails.logger.error("[TelegramWebhook] Error: #{e.class} - #{e.message}\n#{e.backtrace&.first(5)&.join("\n")}")
-  ensure
-    head :ok
+    head :ok unless performed?
   end
 
   private
